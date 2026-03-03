@@ -5,13 +5,6 @@ import subprocess # Used to run external commands (like 'gcc' and the compiled C
 import itertools # Used for comparing the two trace logs (zip_longest)
 import re  # Used for regular expressions, to parse the trace output from C
 import json
-import difflib # lexical-based matching library, used to compare variable names and function names for similarity
-import spacy # smeantics-based matching library, used to compare variable names and function names for similarity
-import spacy.cli
-
-spacy.prefer_gpu()  # Use GPU if available
-nlp = spacy.load("en_core_web_lg")  # Load the large English model for semantic similarity
-
 # Import the necessary components from the clang library
 from clang.cindex import Index, Config, TranslationUnit, CursorKind, TypeKind
 
@@ -334,23 +327,17 @@ def run_c_executable(exe_file):
 def parse_trace_log(stdout):
     """Parses 'TRACE:var=val' lines from the C program's stdout."""
     log = []  # Start with an empty log
-    # Define regular expressions to find lines starting with "TRACE:"
+    # Define a regular expression to find lines starting with "TRACE:"
     pattern_with_val = re.compile(r'^TRACE:L(\d+):(.*?)=(.*)$')
     pattern_noval = re.compile(r'^TRACE:L(\d+):(.*)$')
-
-    for raw_line in stdout.splitlines():  # Loop over each line of output
-        line = raw_line.strip()
-        if not line.startswith("TRACE:"):
-            continue # Skip lines that don't start with "TRACE:"
-
-        match = pattern_with_val.match(line) # See if the line matches our regex
+    for line in stdout.splitlines():  # Loop over each line of output
+        match = pattern_with_val.match(line)  # See if the line matches our regex
         if match:
             # If it matches, "groups()" gives us the two captured parts
             lineno = int(match.group(1))
             label = match.group(2).strip()
             val = match.group(3).strip()
-            log.append((lineno, label, val)) # Add (variable, value) tuple to log
-            continue
+            log.append((lineno, label, val))  # Add (variable, value) tuple to log
         else:
             match2 = pattern_noval.match(line)
             if match2:
@@ -358,57 +345,6 @@ def parse_trace_log(stdout):
                 label = match2.group(2).strip()
                 log.append((lineno, label, None))
     return log
-
-
-def normalize_name(name):
-    """
-    Normalize variable / label names to make matching more robust.
-    - Strips whitespace
-    - Splits camelCase into separate words
-    - Normalizes underscores and multiple spaces
-    - Lowercases everything
-    """
-    if not name:
-        return "" # Returning empty string for None or empty input
-
-    s = name.strip()
-    s = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", s) # Turn camelCase into "camel Case"
-    s = re.sub(r"[_\s]+", " ", s) # Normalize underscores and excessive spaces by replacing them with single space
-    return s.lower()
-
-
-def are_names_equivalent(name1, name2, lex_cutoff = 0.8, semantic_cutoff = 0.75):
-    """
-    Determine if two variable / label names should be treated as "the same"
-    using both lexical and (optional) semantic similarity.
-
-    This relaxes strict 1:1 string equality so that small renamings like
-    "totalSum" vs "sum_total" or minor typos don't break matching.
-    """
-    n1 = normalize_name(name1)
-    n2 = normalize_name(name2)
-
-    if n1 == n2:
-        return True
-
-    # Lexical similarity (SequenceMatcher ratio in [0, 1])
-    lex_sim = difflib.SequenceMatcher(None, n1, n2).ratio()
-    if lex_sim >= lex_cutoff:
-        return True
-
-    # Optional semantic similarity via spaCy, guarded so failures don't break the pipeline
-    try:
-        doc1 = nlp(n1)
-        doc2 = nlp(n2)
-        # Some spaCy models don't have real vectors; similarity falls back to a heuristic.
-        sem_sim = doc1.similarity(doc2)
-        if sem_sim >= semantic_cutoff:
-            return True
-    except Exception:
-        # If spaCy isn't available or similarity fails, just ignore semantic path
-        pass
-
-    return False
 
 def compare_trace_logs(ref_log, buggy_log):
     print("\n TRACE COMPARISON")
@@ -426,18 +362,8 @@ def compare_trace_logs(ref_log, buggy_log):
         ref_line, ref_var, ref_val = ref_entry
         bug_line, bug_var, bug_val = buggy_entry
 
-        # Skip entries where one side is missing a value entirely
-        if ref_val is None or bug_val is None:
-            continue
-
-        # Relaxed matching: treat names as equivalent if they are lexically/semantically close,
-        # instead of requiring exact string equality.
-        names_equiv = are_names_equivalent(str(ref_var), str(bug_var))
-        values_differ = str(ref_val) != str(bug_val)
-
-        # Record a divergence when we believe we're looking at "the same" variable / trace point
-        # but its values differ between reference and buggy runs.
-        if names_equiv and values_differ:
+        # If the entries don't match, and we haven't found a diff yet
+        if ref_entry != buggy_entry and ref_val is not None and bug_val is not None and ref_val != bug_val:
             diff_info = {
                 "trace_index": i,
                 "ref_line": ref_line,
@@ -602,7 +528,6 @@ def main():
                 buggy_log = parse_trace_log(stdout) 
 
     found_diff, diff_line, diff_var, ref_val, bug_val, diffs = compare_trace_logs(ref_log, buggy_log)
-    
     # if found_diff and diff_line is not None:
     #     # if diff_var is not None and ref_val is not None:
     #     #     print(f"\nInserting asset on {diff_var} == {ref_val} at line {diff_line} in buggy file")

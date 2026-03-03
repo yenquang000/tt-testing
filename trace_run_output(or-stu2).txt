@@ -1,0 +1,763 @@
+Found libclang at: /Library/Developer/CommandLineTools/usr/lib/libclang.dylib
+ Processing Reference File: reference_to_trace.c 
+Compiling ref.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=100
+TRACE:L7:total=100
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=180
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=270
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=340
+TRACE:L8:count=4
+TRACE:L14:avg=85.000000
+TRACE:L15:Returning=85.000000
+TRACE:L23:final_avg=85.000000
+Final Average: 85.000000\nTRACE:L25:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=90
+TRACE:L7:total=70
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=130
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=200
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=250
+TRACE:L8:count=4
+TRACE:L14:avg=62.500000
+TRACE:L15:Returning=62.500000
+TRACE:L23:final_avg=62.500000
+Final Average: 62.500000\nTRACE:L25:Returning=0
+
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Attempting individual swaps for 8 differneces
+Swapping lines 6-6 between files
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=100
+TRACE:L7:total=100
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=180
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=270
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=340
+TRACE:L8:count=4
+TRACE:L14:avg=85.000000
+TRACE:L15:Returning=85.000000
+TRACE:L23:final_avg=85.000000
+Final Average: 85.000000\nTRACE:L25:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=90
+TRACE:L7:total=70
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=130
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=200
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=250
+TRACE:L8:count=4
+TRACE:L14:avg=62.500000
+TRACE:L15:Returning=62.500000
+TRACE:L23:final_avg=62.500000
+Final Average: 62.500000\nTRACE:L25:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Swapping lines 7-7 between files
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_2.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=100
+TRACE:L7:total=100
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=180
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=270
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=340
+TRACE:L8:count=4
+TRACE:L14:avg=85.000000
+TRACE:L15:Returning=85.000000
+TRACE:L23:final_avg=85.000000
+Final Average: 85.000000\nTRACE:L25:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=90
+TRACE:L7:total=90
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=170
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=260
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=330
+TRACE:L8:count=4
+TRACE:L14:avg=82.500000
+TRACE:L15:Returning=82.500000
+TRACE:L23:final_avg=82.500000
+Final Average: 82.500000\nTRACE:L25:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Swapping lines 7-7 between files
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_3.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=100
+TRACE:L7:total=100
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=180
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=270
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=340
+TRACE:L8:count=4
+TRACE:L14:avg=85.000000
+TRACE:L15:Returning=85.000000
+TRACE:L23:final_avg=85.000000
+Final Average: 85.000000\nTRACE:L25:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=90
+TRACE:L7:total=90
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=170
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=260
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=330
+TRACE:L8:count=4
+TRACE:L14:avg=82.500000
+TRACE:L15:Returning=82.500000
+TRACE:L23:final_avg=82.500000
+Final Average: 82.500000\nTRACE:L25:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Swapping lines 7-7 between files
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_4.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=100
+TRACE:L7:total=100
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=180
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=270
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=340
+TRACE:L8:count=4
+TRACE:L14:avg=85.000000
+TRACE:L15:Returning=85.000000
+TRACE:L23:final_avg=85.000000
+Final Average: 85.000000\nTRACE:L25:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=90
+TRACE:L7:total=90
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=170
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=260
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=330
+TRACE:L8:count=4
+TRACE:L14:avg=82.500000
+TRACE:L15:Returning=82.500000
+TRACE:L23:final_avg=82.500000
+Final Average: 82.500000\nTRACE:L25:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Swapping lines 7-7 between files
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_5.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=100
+TRACE:L7:total=100
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=180
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=270
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=340
+TRACE:L8:count=4
+TRACE:L14:avg=85.000000
+TRACE:L15:Returning=85.000000
+TRACE:L23:final_avg=85.000000
+Final Average: 85.000000\nTRACE:L25:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=90
+TRACE:L7:total=90
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=170
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=260
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=330
+TRACE:L8:count=4
+TRACE:L14:avg=82.500000
+TRACE:L15:Returning=82.500000
+TRACE:L23:final_avg=82.500000
+Final Average: 82.500000\nTRACE:L25:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Swapping lines 14-14 between files
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_6.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=100
+TRACE:L7:total=100
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=180
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=270
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=340
+TRACE:L8:count=4
+TRACE:L14:avg=85.000000
+TRACE:L15:Returning=85.000000
+TRACE:L23:final_avg=85.000000
+Final Average: 85.000000\nTRACE:L25:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=90
+TRACE:L7:total=70
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=130
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=200
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=250
+TRACE:L8:count=4
+TRACE:L14:avg=62.500000
+TRACE:L15:Returning=62.500000
+TRACE:L23:final_avg=62.500000
+Final Average: 62.500000\nTRACE:L25:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Swapping lines 15-15 between files
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_7.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=100
+TRACE:L7:total=100
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=180
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=270
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=340
+TRACE:L8:count=4
+TRACE:L14:avg=85.000000
+TRACE:L15:Returning=85.000000
+TRACE:L23:final_avg=85.000000
+Final Average: 85.000000\nTRACE:L25:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=90
+TRACE:L7:total=70
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=130
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=200
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=250
+TRACE:L8:count=4
+TRACE:L14:avg=62.500000
+TRACE:L15:Returning=62.500000
+TRACE:L23:final_avg=62.500000
+Final Average: 62.500000\nTRACE:L25:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Swapping lines 23-23 between files
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_8.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=100
+TRACE:L7:total=100
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=180
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=270
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=340
+TRACE:L8:count=4
+TRACE:L14:avg=85.000000
+TRACE:L15:Returning=85.000000
+TRACE:L23:final_avg=85.000000
+Final Average: 85.000000\nTRACE:L25:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L19:Entering main
+TRACE:L21:min_val=65
+TRACE:L22:num=5
+TRACE:L2:num_scores=5
+TRACE:L3:total=0
+TRACE:L4:count=0
+TRACE:L5:i=0
+TRACE:L5:i=0
+TRACE:L6:scores[i]=90
+TRACE:L7:total=70
+TRACE:L8:count=1
+TRACE:L5:i=1
+TRACE:L5:i=1
+TRACE:L6:scores[i]=80
+TRACE:L7:total=130
+TRACE:L8:count=2
+TRACE:L5:i=2
+TRACE:L5:i=2
+TRACE:L5:i=3
+TRACE:L5:i=3
+TRACE:L6:scores[i]=90
+TRACE:L7:total=200
+TRACE:L8:count=3
+TRACE:L5:i=4
+TRACE:L5:i=4
+TRACE:L6:scores[i]=70
+TRACE:L7:total=250
+TRACE:L8:count=4
+TRACE:L14:avg=62.500000
+TRACE:L15:Returning=62.500000
+TRACE:L23:final_avg=62.500000
+Final Average: 62.500000\nTRACE:L25:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+
+Cleaning up .c and .traced.c files...

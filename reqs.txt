@@ -1,0 +1,6 @@
+run: 
+
+import spacy.cli
+spacy.cli.download("en_core_web_lg")
+
+in terminal or code to get the english model for spacy
