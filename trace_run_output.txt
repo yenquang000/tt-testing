@@ -1,0 +1,45 @@
+Found libclang at: /Library/Developer/CommandLineTools/usr/lib/libclang.dylib
+ Processing Reference File: reference_to_trace.c 
+Compiling ref.traced.c using gcc...
+Compilation failed for ref.traced.c:
+ref.traced.c:14:35: error: use of undeclared identifier 'i'
+   14 |         printf("TRACE:L6:i=%d\n", i); fflush(stdout);
+      |                                   ^
+ref.traced.c:16:20: error: use of undeclared identifier 'i'
+   16 |         if (scores[i] >= min_score)
+      |                    ^
+ref.traced.c:17:54: error: use of undeclared identifier 'i'
+   17 |             printf("TRACE:L8:scores[i]=%d\n", scores[i]); fflush(stdout);
+      |                                                      ^
+ref.traced.c:19:29: error: use of undeclared identifier 'i'
+   19 |             total += scores[i];
+      |                             ^
+4 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+
+Processing Buggy File: sample_to_trace.c
+Compiling test.traced.c using gcc...
+Compilation failed for test.traced.c:
+test.traced.c:14:35: error: use of undeclared identifier 'i'
+   14 |         printf("TRACE:L6:i=%d\n", i); fflush(stdout);
+      |                                   ^
+test.traced.c:16:20: error: use of undeclared identifier 'i'
+   16 |         if (scores[i] >= min_score)
+      |                    ^
+test.traced.c:17:54: error: use of undeclared identifier 'i'
+   17 |             printf("TRACE:L8:scores[i]=%d\n", scores[i]); fflush(stdout);
+      |                                                      ^
+test.traced.c:19:30: error: use of undeclared identifier 'i'
+   19 |             total += (scores[i] - 10);
+      |                              ^
+4 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Error: Could not generate one or both trace logs. Exiting.
+
+Cleaning up .c and .traced.c files...
