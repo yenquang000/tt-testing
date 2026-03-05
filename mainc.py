@@ -189,18 +189,31 @@ def instrument_c_code(input_file, output_file): # This function goes through the
            add_injection(body_start_line, inject_text)
 
 
-       elif node.kind == CursorKind.VAR_DECL:
-           var_name = node.spelling
-           var_type = get_variable_type(node)
-           if var_type == 'pointer': #don't trace pointers
-               continue
+      # elif node.kind == CursorKind.VAR_DECL:
+       #    var_name = node.spelling
+        #   var_type = get_variable_type(node)
+       #    if var_type == 'pointer': #don't trace pointers
+         #      continue
           
            # Check if it has an initializer (e.g., '= 0')
-           if any(c.kind.is_expression() for c in node.get_children()):
-               printf_format = get_printf_format(var_type)
-               inject_text = f'    printf("TRACE:L{line}:{var_name}={printf_format}\\n", {var_name}); fflush(stdout);\n'
-               add_injection(line, inject_text)  # Inject *after* this line
-
+          #     printf_format = get_printf_format(var_type)
+           #    inject_text = f'    printf("TRACE:L{line}:{var_name}={printf_format}\\n", {var_name}); fflush(stdout);\n'
+           #    add_injection(line, inject_text)  # Inject *after* this line
+       elif node.kind == CursorKind.FOR_STMT:
+            # Find the loop variable (usually the first child if it's a declaration)
+            for child in node.get_children():
+                if child.kind == CursorKind.VAR_DECL:
+                    var_name = child.spelling
+                    var_type = get_variable_type(child)
+                    # We inject this inside the loop body instead of after the for() line
+                    try:
+                        body = next(c for c in node.get_children() if c.kind == CursorKind.COMPOUND_STMT)
+                        body_line = body.extent.start.line
+                        printf_format = get_printf_format(var_type)
+                        inject_text = f'    printf("TRACE:L{body_line}:(LoopVar){var_name}={printf_format}\\n", {var_name}); fflush(stdout);\n'
+                        add_injection(body_line, inject_text)
+                    except StopIteration:
+                        pass # Loop has no {} body, harder to instrument safely
 
        elif node.kind.is_expression() and node.kind.name == 'BINARY_OPERATOR':
            op_text = get_text(node)  # Get the text, e.g., "avg = (float)total / count"
@@ -210,8 +223,9 @@ def instrument_c_code(input_file, output_file): # This function goes through the
                lhs = list(node.get_children())[0]
                var_name = get_text(lhs)
                if not var_name:
-                   continue
-
+                    continue
+            
+                    
 
                var_type = get_variable_type(lhs)
                if var_type == 'pointer':
@@ -230,7 +244,7 @@ def instrument_c_code(input_file, output_file): # This function goes through the
            var_type = get_variable_type(lhs)
            if var_type == 'pointer':
                continue
-              
+           
            printf_format = get_printf_format(var_type)
            inject_text = f'    printf("TRACE:L{line}:{var_name}={printf_format}\\n", {var_name}); fflush(stdout);\n'
            add_injection(line, inject_text)
@@ -243,7 +257,7 @@ def instrument_c_code(input_file, output_file): # This function goes through the
                var_name = get_text(child)
                if not var_name:
                    continue
-
+               
 
                var_type = get_variable_type(child)
                if var_type == 'pointer':
@@ -441,7 +455,7 @@ def compare_trace_logs(ref_log, buggy_log):
            "ref_line": ref_line,
            "bug_line": None,
            "ref_var": ref_var,
-           "bug_var": bug_var,
+           "bug_var": None,
            "ref_val": ref_val,
            "bug_val": None
        }

@@ -1,45 +1,93 @@
 Found libclang at: /Library/Developer/CommandLineTools/usr/lib/libclang.dylib
  Processing Reference File: reference_to_trace.c 
 Compiling ref.traced.c using gcc...
-Compilation failed for ref.traced.c:
-ref.traced.c:14:35: error: use of undeclared identifier 'i'
-   14 |         printf("TRACE:L6:i=%d\n", i); fflush(stdout);
-      |                                   ^
-ref.traced.c:16:20: error: use of undeclared identifier 'i'
-   16 |         if (scores[i] >= min_score)
-      |                    ^
-ref.traced.c:17:54: error: use of undeclared identifier 'i'
-   17 |             printf("TRACE:L8:scores[i]=%d\n", scores[i]); fflush(stdout);
-      |                                                      ^
-ref.traced.c:19:29: error: use of undeclared identifier 'i'
-   19 |             total += scores[i];
-      |                             ^
-4 errors generated.
 
-Error: Incorrect Recall, incorrect syntax
+Captured Reference Output:
+TRACE:L25:Entering main
+TRACE:L2:num_scores=5
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=5
+TRACE:L11:total=2
+TRACE:L12:count=1
+TRACE:L20:Returning=2.000000
+Final Average: 2.000000\nTRACE:L31:Returning=0
+
 
 Processing Buggy File: sample_to_trace.c
 Compiling test.traced.c using gcc...
-Compilation failed for test.traced.c:
-test.traced.c:14:35: error: use of undeclared identifier 'i'
-   14 |         printf("TRACE:L6:i=%d\n", i); fflush(stdout);
-      |                                   ^
-test.traced.c:16:20: error: use of undeclared identifier 'i'
-   16 |         if (scores[i] >= min_score)
-      |                    ^
-test.traced.c:17:54: error: use of undeclared identifier 'i'
-   17 |             printf("TRACE:L8:scores[i]=%d\n", scores[i]); fflush(stdout);
-      |                                                      ^
-test.traced.c:19:30: error: use of undeclared identifier 'i'
-   19 |             total += (scores[i] - 10);
-      |                              ^
-4 errors generated.
 
-Error: Incorrect Recall, incorrect syntax
+Captured Buggy Output (up to crash):
+TRACE:L25:Entering main
+TRACE:L2:num_scores=5
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=5
+TRACE:L11:total=-8
+TRACE:L12:count=1
+TRACE:L20:Returning=-8.000000
+Final Average: -8.000000\nTRACE:L31:Returning=0
+
 
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-Error: Could not generate one or both trace logs. Exiting.
+Attempting individual swaps for 2 differneces
+
+Finding diffs around line 11...
+-> Diff Type: 'replace'
+-> Swapping buggy lines 11-11 with reference lines 11-11
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L25:Entering main
+TRACE:L2:num_scores=5
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=5
+TRACE:L11:total=2
+TRACE:L12:count=1
+TRACE:L20:Returning=2.000000
+Final Average: 2.000000\nTRACE:L31:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L25:Entering main
+TRACE:L2:num_scores=5
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=5
+TRACE:L11:total=2
+TRACE:L12:count=1
+TRACE:L20:Returning=2.000000
+Final Average: 2.000000\nTRACE:L31:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+No differences found in trace logs. The logic appears identical.
+No differences, after swap, this is the main error at line: 11
 
 Cleaning up .c and .traced.c files...

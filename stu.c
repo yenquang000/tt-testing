@@ -3,7 +3,8 @@ float calculate_average(int scores[], int min_score, int num_scores)
 {
     int total = 0;
     int count = 0;
-    for (int i = 0; i < num_scores; i++)
+    int i;
+    for (i = 0; i < num_scores; i++)
     {
         if (scores[i] >= min_score)
         {
