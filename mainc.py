@@ -21,7 +21,7 @@ possible_paths = [
 ]
 
 
-SWAP_WINDOW_LINES = 1
+SWAP_WINDOW_LINES = 5
 
 
 def setup_libclang():
@@ -478,6 +478,7 @@ def compare_trace_logs(ref_log, buggy_log):
    return True, first_line, first_var, first_ref_var, first_bug_val, diffs
 def swap_code_region_between_files(
        reference_path, buggy_path, center_line,
+       window=SWAP_WINDOW_LINES,
        reference_out_path = "reference_swapped.c", buggy_out_path="sample_swapped.c"
 ):
    with open(reference_path, "r") as f:
@@ -491,38 +492,47 @@ def swap_code_region_between_files(
    target_idx = center_line - 1
    print(f"\nFinding diffs around line {center_line}...")
    # initialize the SequenceMatcher
-   matcher = difflib.SequenceMatcher(None, ref_lines, bug_lines)
-   swap_performed = False
+   #autojunk=False prevents difflib from ignoring blank lines or brackets
+   matcher = difflib.SequenceMatcher(None, ref_lines, bug_lines, autojunk=False)
 
 
-   # iterate through blocks of code
    # get_opcodes() returns instructions on how to turn the reference into the buggy file
-   #i1 and i2 are start and end of the reference file
-   #j1 and j2 are start and end of the buggy file
+  #i1 and i2 are start and end of the reference file
+  #j1 and j2 are start and end of the buggy file
+   candidates = [] #of broken code block 
+   
    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-       if tag in ('replace', 'delete', 'insert'):
-          
-           # Check if target_idx falls inside this specific difference block
-           if j1 <= target_idx <= j2:
-               print(f"-> Diff Type: '{tag}'")
-               print(f"-> Swapping buggy lines {j1+1}-{j2} with reference lines {i1+1}-{i2}")
-              
-               # 4. Execute the dynamic swap
-               # Because we are using slice assignment, Python easily handles mismatched sizes
-               # (e.g., replacing 5 buggy lines with 2 reference lines)
-               bug_lines[j1:j2] = ref_lines[i1:i2]
-               swap_performed = True
-              
-               # Break immediately after the first swap 
-               break
-
-
-   if not swap_performed:
-       print(f"-> No continuous difference block found containing line {center_line}.")   
+       if tag not in ('replace', 'delete', 'insert'):
+           continue  
+       if j1 <= target_idx <= j2:
+           distance = 0  # target is inside this block
+       else:
+           distance = min(abs(target_idx - j1), abs(target_idx - j2))
+      
+       # only consider blocks within the window
+       if distance <= window:
+           candidates.append((distance, tag, i1, i2, j1, j2))
+   if not candidates:
+       print(f"No diff block found within ±{window} lines of line {center_line}.")
+      
+       with open(reference_out_path, "w") as f:
+           f.writelines(ref_lines)
+       with open(buggy_out_path, "w") as f:
+           f.writelines(bug_lines)
+       return reference_out_path, buggy_out_path
+  #select the candidate for patching
+   tag_priority = {'replace': 0, 'delete': 1, 'insert': 2}
+  #sort the list by distance(in ascending order), then by tag priority
+   candidates.sort(key=lambda c: (c[0], tag_priority.get(c[1], 3)))
+   distance, tag, i1, i2, j1, j2 = candidates[0]
+   print(f"-> Best match Diff type: '{tag}', distance: {distance} lines")
+   print(f"-> Swapping buggy lines {j1+1}-{j2} with reference lines {i1+1}-{i2}")
+   bug_lines[j1:j2] = ref_lines[i1:i2]
    with open(reference_out_path, "w") as f:
        f.writelines(ref_lines)
    with open(buggy_out_path, "w") as f:
        f.writelines(bug_lines)
+
    return reference_out_path, buggy_out_path
 
 

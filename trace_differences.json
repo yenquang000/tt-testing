@@ -1,20 +1,29 @@
 [
   {
-    "trace_index": 8,
-    "ref_line": 11,
-    "bug_line": 11,
-    "ref_var": "total",
-    "bug_var": "total",
-    "ref_val": "2",
-    "bug_val": "-8"
+    "trace_index": 2,
+    "ref_line": 6,
+    "bug_line": 10,
+    "ref_var": "base",
+    "bug_var": "Returning",
+    "ref_val": "60",
+    "bug_val": "100"
   },
   {
-    "trace_index": 10,
-    "ref_line": 20,
-    "bug_line": 20,
+    "trace_index": 3,
+    "ref_line": 11,
+    "bug_line": 16,
     "ref_var": "Returning",
     "bug_var": "Returning",
-    "ref_val": "2.000000",
-    "bug_val": "-8.000000"
+    "ref_val": "120",
+    "bug_val": "0"
+  },
+  {
+    "trace_index": 4,
+    "ref_line": 17,
+    "bug_line": null,
+    "ref_var": "Returning",
+    "bug_var": "(Missing)",
+    "ref_val": "0",
+    "bug_val": "(Missing)"
   }
 ]

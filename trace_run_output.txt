@@ -3,46 +3,31 @@ Found libclang at: /Library/Developer/CommandLineTools/usr/lib/libclang.dylib
 Compiling ref.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L25:Entering main
-TRACE:L2:num_scores=5
-TRACE:L7:i=0
-TRACE:L7:i=1
-TRACE:L7:i=2
-TRACE:L7:i=3
-TRACE:L7:i=4
-TRACE:L7:i=5
-TRACE:L11:total=2
-TRACE:L12:count=1
-TRACE:L20:Returning=2.000000
-Final Average: 2.000000\nTRACE:L31:Returning=0
+TRACE:L15:Entering main
+TRACE:L1:base=50
+TRACE:L6:base=60
+TRACE:L11:Returning=120
+TRACE:L17:Returning=0
 
 
 Processing Buggy File: sample_to_trace.c
 Compiling test.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L25:Entering main
-TRACE:L2:num_scores=5
-TRACE:L7:i=0
-TRACE:L7:i=1
-TRACE:L7:i=2
-TRACE:L7:i=3
-TRACE:L7:i=4
-TRACE:L7:i=5
-TRACE:L11:total=-8
-TRACE:L12:count=1
-TRACE:L20:Returning=-8.000000
-Final Average: -8.000000\nTRACE:L31:Returning=0
+TRACE:L14:Entering main
+TRACE:L1:base=50
+TRACE:L10:Returning=100
+TRACE:L16:Returning=0
 
 
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-Attempting individual swaps for 2 differneces
+Attempting individual swaps for 3 differneces
 
-Finding diffs around line 11...
--> Diff Type: 'replace'
--> Swapping buggy lines 11-11 with reference lines 11-11
+Finding diffs around line 10...
+-> Best match Diff type: 'replace', distance: 4 lines
+-> Swapping buggy lines 5-5 with reference lines 5-6 **patched the stu.c with the correct block from ref.c
 
  RERUNNING ALGORITHM
 
@@ -50,36 +35,22 @@ Finding diffs around line 11...
 Compiling ref_swapped.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L25:Entering main
-TRACE:L2:num_scores=5
-TRACE:L7:i=0
-TRACE:L7:i=1
-TRACE:L7:i=2
-TRACE:L7:i=3
-TRACE:L7:i=4
-TRACE:L7:i=5
-TRACE:L11:total=2
-TRACE:L12:count=1
-TRACE:L20:Returning=2.000000
-Final Average: 2.000000\nTRACE:L31:Returning=0
+TRACE:L15:Entering main
+TRACE:L1:base=50
+TRACE:L6:base=60
+TRACE:L11:Returning=120
+TRACE:L17:Returning=0
 
 
 Processing Buggy File: sample_to_trace.c
 Compiling test_swapped.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L25:Entering main
-TRACE:L2:num_scores=5
-TRACE:L7:i=0
-TRACE:L7:i=1
-TRACE:L7:i=2
-TRACE:L7:i=3
-TRACE:L7:i=4
-TRACE:L7:i=5
-TRACE:L11:total=2
-TRACE:L12:count=1
-TRACE:L20:Returning=2.000000
-Final Average: 2.000000\nTRACE:L31:Returning=0
+TRACE:L15:Entering main
+TRACE:L1:base=50
+TRACE:L6:base=60
+TRACE:L11:Returning=120
+TRACE:L17:Returning=0
 
 
 TRACE COMPARISON AFTER SWAP
@@ -88,6 +59,6 @@ TRACE COMPARISON AFTER SWAP
 Comparing logs to find the first point of divergence...
 
 No differences found in trace logs. The logic appears identical.
-No differences, after swap, this is the main error at line: 11
+No differences, after swap, this is the main error at line: 10
 
 Cleaning up .c and .traced.c files...
