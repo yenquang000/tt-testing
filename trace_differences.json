@@ -1,0 +1,65 @@
+[
+  {
+    "trace_index": 9,
+    "ref_line": 7,
+    "bug_line": 7,
+    "ref_var": "total",
+    "bug_var": "total",
+    "ref_val": "100",
+    "bug_val": "90"
+  },
+  {
+    "trace_index": 14,
+    "ref_line": 7,
+    "bug_line": 7,
+    "ref_var": "total",
+    "bug_var": "total",
+    "ref_val": "180",
+    "bug_val": "160"
+  },
+  {
+    "trace_index": 21,
+    "ref_line": 7,
+    "bug_line": 7,
+    "ref_var": "total",
+    "bug_var": "total",
+    "ref_val": "270",
+    "bug_val": "240"
+  },
+  {
+    "trace_index": 26,
+    "ref_line": 7,
+    "bug_line": 7,
+    "ref_var": "total",
+    "bug_var": "total",
+    "ref_val": "340",
+    "bug_val": "300"
+  },
+  {
+    "trace_index": 28,
+    "ref_line": 14,
+    "bug_line": 14,
+    "ref_var": "avg",
+    "bug_var": "avg",
+    "ref_val": "85.000000",
+    "bug_val": "75.000000"
+  },
+  {
+    "trace_index": 29,
+    "ref_line": 15,
+    "bug_line": 15,
+    "ref_var": "Returning",
+    "bug_var": "Returning",
+    "ref_val": "85.000000",
+    "bug_val": "75.000000"
+  },
+  {
+    "trace_index": 30,
+    "ref_line": 23,
+    "bug_line": 23,
+    "ref_var": "final_avg",
+    "bug_var": "final_avg",
+    "ref_val": "85.000000",
+    "bug_val": "75.000000"
+  }
+]

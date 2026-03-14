@@ -303,6 +303,140 @@ def compile_c_code(c_file, exe_file):
         return False
     return True  # Success
 
+def build_series(log):
+    """Builds a series of variable states/values from the trace log."""
+    series = []
+    current_state = {}
+    for lineno, var, val in log:
+        if val is not None:
+            current_state[var] = val # variable is key and val is the value
+        # Make a copy of the current state and append it to the series
+        series.append( (lineno, dict(current_state)) )
+    return series
+
+def series_similarity(series1, series2):
+    """Compares two series of variable states/values and returns a similarity score."""
+    if not series1 or not series2:
+        return 0.0  # No similarity if one series is empty
+
+    total_points = min(len(series1), len(series2))
+    matching_points = 0
+
+    for (line1, state1), (line2, state2) in zip(series1, series2):
+        if line1 != line2:
+            continue  # Only compare states at the same line number
+        # Compare variable states
+        if state1 == state2:
+            matching_points += 1
+
+    return matching_points / total_points if total_points > 0 else 0.0
+
+
+def build_variable_value_series(log):
+    """
+    Build a time–ordered series of values for each variable seen in a trace log.
+    Returns a dict: { var_name: [value1, value2, ...] }.
+    """
+    series = {}
+    for _, var, val in log:
+        if val is None:
+            continue
+        key = str(var)
+        if key not in series:
+            series[key] = []
+        series[key].append(str(val))
+    return series
+
+
+def value_series_similarity(seq1, seq2):
+    """
+    Simple similarity between two value sequences.
+    - Aligns sequences by index.
+    - Rewards equal values at the same position.
+    - Penalizes big length differences.
+    Returns a score in [0, 1].
+    """
+    if not seq1 or not seq2:
+        return 0.0
+
+    len1 = len(seq1)
+    len2 = len(seq2)
+    min_len = min(len1, len2)
+    max_len = max(len1, len2)
+
+    if min_len == 0:
+        return 0.0
+
+    matching = 0
+    for a, b in itertools.zip_longest(seq1, seq2, fillvalue=None):
+        if a is None or b is None:
+            continue
+        if str(a) == str(b):
+            matching += 1
+
+    base = matching / max_len
+    length_penalty = min_len / max_len
+    return base * length_penalty
+
+
+def greedy_match_variables_by_values(ref_log, buggy_log,
+                                     value_threshold=0.6,
+                                     loose_name_threshold=0.3):
+    """
+    Greedily match reference variables to buggy variables based on how similar
+    their runtime value series are, while still preferring name-based matches.
+
+    - First builds value sequences for each variable in each log.
+    - Computes value-series similarity for every (ref_var, bug_var) pair.
+    - Keeps pairs whose:
+        * value similarity >= value_threshold, OR
+        * value similarity >= loose_name_threshold and names look equivalent.
+    - Sorts candidates by similarity and greedily picks non-conflicting pairs.
+
+    Returns: dict mapping ref_var -> bug_var.
+    """
+    ref_series = build_variable_value_series(ref_log or [])
+    bug_series = build_variable_value_series(buggy_log or [])
+
+    if not ref_series or not bug_series:
+        return {}
+
+    candidates = []
+    for ref_var, ref_seq in ref_series.items():
+        for bug_var, bug_seq in bug_series.items():
+            sim = value_series_similarity(ref_seq, bug_seq)
+            if sim <= 0.0:
+                continue
+
+            # Prefer pairs whose names already look like they correspond.
+            name_equiv = are_names_equivalent(ref_var, bug_var)
+
+            if sim >= value_threshold or (name_equiv and sim >= loose_name_threshold):
+                candidates.append((sim, ref_var, bug_var))
+
+    if not candidates:
+        return {}
+
+    # Sort by descending similarity and pick the best non-conflicting matches.
+    candidates.sort(reverse=True, key=lambda x: x[0])
+
+    ref_matched = set()
+    bug_matched = set()
+    mapping = {}
+
+    for sim, ref_var, bug_var in candidates:
+        if ref_var in ref_matched or bug_var in bug_matched:
+            continue
+        mapping[ref_var] = bug_var
+        ref_matched.add(ref_var)
+        bug_matched.add(bug_var)
+
+    if mapping:
+        print("\nGreedy variable mapping based on runtime values:")
+        for ref_var, bug_var in mapping.items():
+            print(f"  {ref_var}  ->  {bug_var}")
+
+    return mapping
 
 def run_c_executable(exe_file):
     """Runs a compiled C executable and returns its captured stdout."""
@@ -419,6 +553,11 @@ def compare_trace_logs(ref_log, buggy_log):
         return False, None, None, None, None, []
     diffs = []
     first_diff = None
+
+    # Build a best-effort mapping from reference variable names to student
+    # variable names based on how their runtime value sequences behave.
+    var_mapping = greedy_match_variables_by_values(ref_log, buggy_log)
+
     # zip_longest compares two lists, pairing items.
     # If one list is shorter, it fills with `fillvalue`.
     for i, (ref_entry, buggy_entry) in enumerate(itertools.zip_longest(ref_log, buggy_log, fillvalue=(None, "(Missing)", "(Missing)"))):
@@ -431,8 +570,12 @@ def compare_trace_logs(ref_log, buggy_log):
             continue
 
         # Relaxed matching: treat names as equivalent if they are lexically/semantically close,
-        # instead of requiring exact string equality.
-        names_equiv = are_names_equivalent(str(ref_var), str(bug_var))
+        # instead of requiring exact string equality, or if our runtime-series matching
+        # believes this reference variable corresponds to the given buggy variable.
+        basic_name_equiv = are_names_equivalent(str(ref_var), str(bug_var))
+        mapped_bug_for_ref = var_mapping.get(str(ref_var))
+        mapped_equiv = mapped_bug_for_ref is not None and mapped_bug_for_ref == str(bug_var)
+        names_equiv = basic_name_equiv or mapped_equiv
         values_differ = str(ref_val) != str(bug_val)
 
         # Record a divergence when we believe we're looking at "the same" variable / trace point
@@ -565,7 +708,7 @@ def main():
 
     with open("ref.c", "r") as f:
         referenceCode = f.read()
-    with open("stu3.c", "r") as f:
+    with open("stu.c", "r") as f:
         buggyCode = f.read()
     ref_file = "reference_to_trace.c"
     test_file = "sample_to_trace.c"
