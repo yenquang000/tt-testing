@@ -353,36 +353,46 @@ def compile_c_code(c_file, exe_file):
        return False
    return True  # Success
 
-
+def _is_swap_valid(lines, tmp_path="swap_test_check.c"):
+    try:
+        with open(tmp_path, "w") as f:
+            f.writelines(lines)
+        result = compile_c_code(tmp_path, "swap_test_exe")
+        return result
+    except Exception:
+        return False
+    finally:
+        # clean up temp files
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        if os.path.exists("swap_test_exe"):
+            os.remove("swap_test_exe")
+        if os.path.exists("swap_test_exe.exe"):
+            os.remove("swap_test_exe.exe")
 
 
 def run_c_executable(exe_file):
    """Runs a compiled C executable and returns its captured stdout."""
-   # Command is './exe_file' on Linux/macOS and '.\exe_file' on Windows
+   #'./exe_file' on Linux/macOS and '.\exe_file' on Windows
    run_command = f"./{exe_file}" if os.name != 'nt' else f".\\{exe_file}"
 
 
    try:
-       # Run the command. check=True makes it raise an error if the program crashes.
+       
        result = subprocess.run(
            run_command, check=True, capture_output=True, text=True, shell=True)
-       return result.stdout  # Return the text output from the C program
+       return result.stdout  # return the text output from the C program
    except subprocess.CalledProcessError as e:
-       # This block catches crashes (e.g., our "Assertion failed")
+       #catch crashes
        print(f"Execution failed for {exe_file}:")
-       print(e.stderr)  # Print the error message (e.g., "Assertion failed: ...")
-       # Return the stdout captured *before* the crash. This is why we used fflush!
+       print(e.stderr)  
        return e.stdout
-   finally:
-       # This block runs whether the program succeeded or crashed
-       # Clean up executable file
+   finally:     
        exe_path = exe_file
        if os.name == 'nt' and not exe_file.endswith('.exe'):
-           exe_path = f"{exe_file}.exe"  # Add .exe on Windows
-
-
+           exe_path = f"{exe_file}.exe" 
        if os.path.exists(exe_path):
-           os.remove(exe_path)  # Delete the compiled .exe file
+           os.remove(exe_path) 
 
 
 
@@ -449,7 +459,7 @@ def compare_trace_logs(ref_log, buggy_log):
        print("Buggy code crashed or stopped early.")
        idx = len(buggy_log)
        ref_line, ref_var, ref_val = ref_log[idx]
-       # Print the next line from the reference log that was never reached
+       
        diff_info = {
            "trace_index": idx,
            "ref_line": ref_line,
@@ -460,7 +470,7 @@ def compare_trace_logs(ref_log, buggy_log):
            "bug_val": None
        }
        diffs.append(diff_info)
-   elif not diffs:  # If no diffs were found at all
+   elif not diffs:  
        print("No differences found in trace logs. The logic appears identical.")
        return False, None, None, None, None, []
    try:
@@ -526,12 +536,32 @@ def swap_code_region_between_files(
    candidates.sort(key=lambda c: (c[0], tag_priority.get(c[1], 3)))
    distance, tag, i1, i2, j1, j2 = candidates[0]
    print(f"-> Best match Diff type: '{tag}', distance: {distance} lines")
-   print(f"-> Swapping buggy lines {j1+1}-{j2} with reference lines {i1+1}-{i2}")
-   bug_lines[j1:j2] = ref_lines[i1:i2]
+   swap_size = j2 - j1  
+   swapped_lines = None
+
+   while swap_size >= 1:
+        
+        attempt_j1 = max(j1, target_idx - swap_size // 2)
+        attempt_j2 = min(j2, attempt_j1 + swap_size)
+        attempt_i1 = i1
+        attempt_i2 = min(i2, i1 + swap_size)
+
+        candidate_lines = bug_lines[:attempt_j1] + ref_lines[attempt_i1:attempt_i2] + bug_lines[attempt_j2:]
+
+        print(f"-> Trying swap of {swap_size} line(s) (buggy {attempt_j1+1}-{attempt_j2}, ref {attempt_i1+1}-{attempt_i2})...")
+
+        if _is_swap_valid(candidate_lines):
+            print(f"-> Swap of {swap_size} line(s) compiled successfully!")
+            swapped_lines = candidate_lines
+            break
+        swap_size -= 1  # get smaller after every iteration
+   if swapped_lines is None:
+        print(f"-> No valid swap found")
+        swapped_lines = bug_lines
    with open(reference_out_path, "w") as f:
        f.writelines(ref_lines)
    with open(buggy_out_path, "w") as f:
-       f.writelines(bug_lines)
+       f.writelines(swapped_lines)
 
    return reference_out_path, buggy_out_path
 

@@ -27,7 +27,19 @@ Attempting individual swaps for 3 differneces
 
 Finding diffs around line 10...
 -> Best match Diff type: 'replace', distance: 4 lines
--> Swapping buggy lines 5-5 with reference lines 5-6 **patched the stu.c with the correct block from ref.c
+-> Trying swap of 1 line(s) (buggy 10-5, ref 5-5)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:9: error: redefinition of 'final_score'
+   13 |     int final_score = base * 2;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int final_score = base * 2;
+      |         ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found
 
  RERUNNING ALGORITHM
 
@@ -46,11 +58,10 @@ Processing Buggy File: sample_to_trace.c
 Compiling test_swapped.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L15:Entering main
+TRACE:L14:Entering main
 TRACE:L1:base=50
-TRACE:L6:base=60
-TRACE:L11:Returning=120
-TRACE:L17:Returning=0
+TRACE:L10:Returning=100
+TRACE:L16:Returning=0
 
 
 TRACE COMPARISON AFTER SWAP
@@ -58,7 +69,69 @@ TRACE COMPARISON AFTER SWAP
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-No differences found in trace logs. The logic appears identical.
-No differences, after swap, this is the main error at line: 10
+
+Finding diffs around line 16...
+No diff block found within ±5 lines of line 16.
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_2.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L1:base=50
+TRACE:L6:base=60
+TRACE:L11:Returning=120
+TRACE:L17:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L14:Entering main
+TRACE:L1:base=50
+TRACE:L10:Returning=100
+TRACE:L16:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+
+Finding diffs around line 17...
+No diff block found within ±5 lines of line 17.
+
+ RERUNNING ALGORITHM
+
+ Processing Swapped Reference File : reference_swapped_3.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L1:base=50
+TRACE:L6:base=60
+TRACE:L11:Returning=120
+TRACE:L17:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L14:Entering main
+TRACE:L1:base=50
+TRACE:L10:Returning=100
+TRACE:L16:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
 
 Cleaning up .c and .traced.c files...
