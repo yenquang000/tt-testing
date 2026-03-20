@@ -5,13 +5,6 @@ import subprocess # Used to run external commands (like 'gcc' and the compiled C
 import itertools # Used for comparing the two trace logs (zip_longest)
 import re  # Used for regular expressions, to parse the trace output from C
 import json
-import difflib # lexical-based matching library, used to compare variable names and function names for similarity
-import spacy # smeantics-based matching library, used to compare variable names and function names for similarity
-import spacy.cli
-
-spacy.prefer_gpu()  # Use GPU if available
-nlp = spacy.load("en_core_web_lg")  # Load the large English model for semantic similarity
-
 # Import the necessary components from the clang library
 from clang.cindex import Index, Config, TranslationUnit, CursorKind, TypeKind
 
@@ -303,157 +296,6 @@ def compile_c_code(c_file, exe_file):
         return False
     return True  # Success
 
-def _is_swap_valid(lines, tmp_path="swap_test_check.c"):
-   try:
-       with open(tmp_path, "w") as f:
-           f.writelines(lines)
-       result = compile_c_code(tmp_path, "swap_test_exe")
-       return result
-   except Exception:
-       return False
-   finally:
-       # clean up temp files
-       if os.path.exists(tmp_path):
-           os.remove(tmp_path)
-       if os.path.exists("swap_test_exe"):
-           os.remove("swap_test_exe")
-       if os.path.exists("swap_test_exe.exe"):
-           os.remove("swap_test_exe.exe")
-
-def build_series(log):
-    """Builds a series of variable states/values from the trace log."""
-    series = []
-    current_state = {}
-    for lineno, var, val in log:
-        if val is not None:
-            current_state[var] = val # variable is key and val is the value
-        # Make a copy of the current state and append it to the series
-        series.append( (lineno, dict(current_state)) )
-    return series
-
-def series_similarity(series1, series2):
-    """Compares two series of variable states/values and returns a similarity score."""
-    if not series1 or not series2:
-        return 0.0  # No similarity if one series is empty
-
-    total_points = min(len(series1), len(series2))
-    matching_points = 0
-
-    for (line1, state1), (line2, state2) in zip(series1, series2):
-        if line1 != line2:
-            continue  # Only compare states at the same line number
-        # Compare variable states
-        if state1 == state2:
-            matching_points += 1
-
-    return matching_points / total_points if total_points > 0 else 0.0
-
-
-def build_variable_value_series(log):
-    """
-    Build a time–ordered series of values for each variable seen in a trace log.
-    Returns a dict: { var_name: [value1, value2, ...] }.
-    """
-    series = {}
-    for _, var, val in log:
-        if val is None:
-            continue
-        key = str(var)
-        if key not in series:
-            series[key] = []
-        series[key].append(str(val))
-    return series
-
-
-def value_series_similarity(seq1, seq2):
-    """
-    Simple similarity between two value sequences.
-    - Aligns sequences by index.
-    - Rewards equal values at the same position.
-    - Penalizes big length differences.
-    Returns a score in [0, 1].
-    """
-    if not seq1 or not seq2:
-        return 0.0
-
-    len1 = len(seq1)
-    len2 = len(seq2)
-    min_len = min(len1, len2)
-    max_len = max(len1, len2)
-
-    if min_len == 0:
-        return 0.0
-
-    matching = 0
-    for a, b in itertools.zip_longest(seq1, seq2, fillvalue=None):
-        if a is None or b is None:
-            continue
-        if str(a) == str(b):
-            matching += 1
-
-    base = matching / max_len
-    length_penalty = min_len / max_len
-    return base * length_penalty
-
-
-def greedy_match_variables_by_values(ref_log, buggy_log,
-                                     value_threshold=0.6,
-                                     loose_name_threshold=0.3):
-    """
-    Greedily match reference variables to buggy variables based on how similar
-    their runtime value series are, while still preferring name-based matches.
-
-    - First builds value sequences for each variable in each log.
-    - Computes value-series similarity for every (ref_var, bug_var) pair.
-    - Keeps pairs whose:
-        * value similarity >= value_threshold, OR
-        * value similarity >= loose_name_threshold and names look equivalent.
-    - Sorts candidates by similarity and greedily picks non-conflicting pairs.
-
-    Returns: dict mapping ref_var -> bug_var.
-    """
-    ref_series = build_variable_value_series(ref_log or [])
-    bug_series = build_variable_value_series(buggy_log or [])
-
-    if not ref_series or not bug_series:
-        return {}
-
-    candidates = []
-    for ref_var, ref_seq in ref_series.items():
-        for bug_var, bug_seq in bug_series.items():
-            sim = value_series_similarity(ref_seq, bug_seq)
-            if sim <= 0.0:
-                continue
-
-            # Prefer pairs whose names already look like they correspond.
-            name_equiv = are_names_equivalent(ref_var, bug_var)
-
-            if sim >= value_threshold or (name_equiv and sim >= loose_name_threshold):
-                candidates.append((sim, ref_var, bug_var))
-
-    if not candidates:
-        return {}
-
-    # Sort by descending similarity and pick the best non-conflicting matches.
-    candidates.sort(reverse=True, key=lambda x: x[0])
-
-    ref_matched = set()
-    bug_matched = set()
-    mapping = {}
-
-    for sim, ref_var, bug_var in candidates:
-        if ref_var in ref_matched or bug_var in bug_matched:
-            continue
-        mapping[ref_var] = bug_var
-        ref_matched.add(ref_var)
-        bug_matched.add(bug_var)
-
-    if mapping:
-        print("\nGreedy variable mapping based on runtime values:")
-        for ref_var, bug_var in mapping.items():
-            print(f"  {ref_var}  ->  {bug_var}")
-
-    return mapping
 
 def run_c_executable(exe_file):
     """Runs a compiled C executable and returns its captured stdout."""
@@ -485,23 +327,17 @@ def run_c_executable(exe_file):
 def parse_trace_log(stdout):
     """Parses 'TRACE:var=val' lines from the C program's stdout."""
     log = []  # Start with an empty log
-    # Define regular expressions to find lines starting with "TRACE:"
+    # Define a regular expression to find lines starting with "TRACE:"
     pattern_with_val = re.compile(r'^TRACE:L(\d+):(.*?)=(.*)$')
     pattern_noval = re.compile(r'^TRACE:L(\d+):(.*)$')
-
-    for raw_line in stdout.splitlines():  # Loop over each line of output
-        line = raw_line.strip()
-        if not line.startswith("TRACE:"):
-            continue # Skip lines that don't start with "TRACE:"
-
-        match = pattern_with_val.match(line) # See if the line matches our regex
+    for line in stdout.splitlines():  # Loop over each line of output
+        match = pattern_with_val.match(line)  # See if the line matches our regex
         if match:
             # If it matches, "groups()" gives us the two captured parts
             lineno = int(match.group(1))
             label = match.group(2).strip()
             val = match.group(3).strip()
-            log.append((lineno, label, val)) # Add (variable, value) tuple to log
-            continue
+            log.append((lineno, label, val))  # Add (variable, value) tuple to log
         else:
             match2 = pattern_noval.match(line)
             if match2:
@@ -509,57 +345,6 @@ def parse_trace_log(stdout):
                 label = match2.group(2).strip()
                 log.append((lineno, label, None))
     return log
-
-
-def normalize_name(name):
-    """
-    Normalize variable / label names to make matching more robust.
-    - Strips whitespace
-    - Splits camelCase into separate words
-    - Normalizes underscores and multiple spaces
-    - Lowercases everything
-    """
-    if not name:
-        return "" # Returning empty string for None or empty input
-
-    s = name.strip()
-    s = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", s) # Turn camelCase into "camel Case"
-    s = re.sub(r"[_\s]+", " ", s) # Normalize underscores and excessive spaces by replacing them with single space
-    return s.lower()
-
-
-def are_names_equivalent(name1, name2, lex_cutoff = 0.8, semantic_cutoff = 0.75):
-    """
-    Determine if two variable / label names should be treated as "the same"
-    using both lexical and (optional) semantic similarity.
-
-    This relaxes strict 1:1 string equality so that small renamings like
-    "totalSum" vs "sum_total" or minor typos don't break matching.
-    """
-    n1 = normalize_name(name1)
-    n2 = normalize_name(name2)
-
-    if n1 == n2:
-        return True
-
-    # Lexical similarity (SequenceMatcher ratio in [0, 1])
-    lex_sim = difflib.SequenceMatcher(None, n1, n2).ratio()
-    if lex_sim >= lex_cutoff:
-        return True
-
-    # Optional semantic similarity via spaCy, guarded so failures don't break the pipeline
-    try:
-        doc1 = nlp(n1)
-        doc2 = nlp(n2)
-        # Some spaCy models don't have real vectors; similarity falls back to a heuristic.
-        sem_sim = doc1.similarity(doc2)
-        if sem_sim >= semantic_cutoff:
-            return True
-    except Exception:
-        # If spaCy isn't available or similarity fails, just ignore semantic path
-        pass
-
-    return False
 
 def compare_trace_logs(ref_log, buggy_log):
     print("\n TRACE COMPARISON")
@@ -570,11 +355,6 @@ def compare_trace_logs(ref_log, buggy_log):
         return False, None, None, None, None, []
     diffs = []
     first_diff = None
-
-    # Build a best-effort mapping from reference variable names to student
-    # variable names based on how their runtime value sequences behave.
-    var_mapping = greedy_match_variables_by_values(ref_log, buggy_log)
-
     # zip_longest compares two lists, pairing items.
     # If one list is shorter, it fills with `fillvalue`.
     for i, (ref_entry, buggy_entry) in enumerate(itertools.zip_longest(ref_log, buggy_log, fillvalue=(None, "(Missing)", "(Missing)"))):
@@ -582,22 +362,8 @@ def compare_trace_logs(ref_log, buggy_log):
         ref_line, ref_var, ref_val = ref_entry
         bug_line, bug_var, bug_val = buggy_entry
 
-        # Skip entries where one side is missing a value entirely
-        if ref_val is None or bug_val is None:
-            continue
-
-        # Relaxed matching: treat names as equivalent if they are lexically/semantically close,
-        # instead of requiring exact string equality, or if our runtime-series matching
-        # believes this reference variable corresponds to the given buggy variable.
-        basic_name_equiv = are_names_equivalent(str(ref_var), str(bug_var))
-        mapped_bug_for_ref = var_mapping.get(str(ref_var))
-        mapped_equiv = mapped_bug_for_ref is not None and mapped_bug_for_ref == str(bug_var)
-        names_equiv = basic_name_equiv or mapped_equiv
-        values_differ = str(ref_val) != str(bug_val)
-
-        # Record a divergence when we believe we're looking at "the same" variable / trace point
-        # but its values differ between reference and buggy runs.
-        if names_equiv and values_differ:
+        # If the entries don't match, and we haven't found a diff yet
+        if ref_entry != buggy_entry and ref_val is not None and bug_val is not None and ref_val != bug_val:
             diff_info = {
                 "trace_index": i,
                 "ref_line": ref_line,
@@ -642,95 +408,41 @@ def compare_trace_logs(ref_log, buggy_log):
 
     return True, first_line, first_var, first_ref_var, first_bug_val, diffs
 def swap_code_region_between_files(
-      reference_path, buggy_path, center_line,
-      window=SWAP_WINDOW_LINES,
-      reference_out_path = "reference_swapped.c", buggy_out_path="sample_swapped.c"
+        reference_path, buggy_path, center_line, window=SWAP_WINDOW_LINES, 
+        reference_out_path = "reference_swapped.c", buggy_out_path="sample_swapped.c"
 ):
-  with open(reference_path, "r") as f:
-      ref_lines = f.readlines()
-  with open(buggy_path, "r") as f:
-      bug_lines = f.readlines()
-  if center_line is None:
-      return reference_out_path, buggy_out_path
-  # convert the 1-based C line number to a 0-based Python list index
-  target_idx = center_line - 1
-  print(f"\nFinding diffs around line {center_line}...")
-  # initialize the SequenceMatcher
-  #autojunk=False prevents difflib from ignoring blank lines or brackets
-  matcher = difflib.SequenceMatcher(None, ref_lines, bug_lines, autojunk=False)
-
-
-
-
-  # get_opcodes() returns instructions on how to turn the reference into the buggy file
- #i1 and i2 are start and end of the reference file
- #j1 and j2 are start and end of the buggy file
-  candidates = [] #of broken code block
- 
-  for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-      if tag not in ('replace', 'delete', 'insert'):
-          continue 
-      if j1 <= target_idx <= j2:
-          distance = 0  # target is inside this block
-      else:
-          distance = min(abs(target_idx - j1), abs(target_idx - j2))
+    with open(reference_path, "r") as f:
+        ref_lines = f.readlines()
+    with open(buggy_path, "r") as f:
+        bug_lines = f.readlines()
+    max_len = min(len(ref_lines), len(bug_lines))
     
-      # only consider blocks within the window
-      if distance <= window:
-          candidates.append((distance, tag, i1, i2, j1, j2))
-  if not candidates:
-      print(f"No diff block found within ±{window} lines of line {center_line}.")
-    
-      with open(reference_out_path, "w") as f:
-          f.writelines(ref_lines)
-      with open(buggy_out_path, "w") as f:
-          f.writelines(bug_lines)
-      return reference_out_path, buggy_out_path
- #select the candidate for patching
-  tag_priority = {'replace': 0, 'delete': 1, 'insert': 2}
- #sort the list by distance(in ascending order), then by tag priority
-  candidates.sort(key=lambda c: (c[0], tag_priority.get(c[1], 3)))
-  distance, tag, i1, i2, j1, j2 = candidates[0]
-  print(f"-> Best match Diff type: '{tag}', distance: {distance} lines")
-  swap_size = j2 - j1 
-  swapped_lines = None
+    if center_line is None:
+        return reference_out_path, buggy_out_path
 
+    start_line = max(1, center_line - window)
+    end_line = min(max_len, center_line + window)
 
-  while swap_size >= 1:
-      
-       attempt_j1 = max(j1, target_idx - swap_size // 2)
-       attempt_j2 = min(j2, attempt_j1 + swap_size)
-       attempt_i1 = i1
-       attempt_i2 = min(i2, i1 + swap_size)
+    if start_line > end_line:
+        print("Swap regionm is empty; no swap performed.")
+        return reference_out_path, buggy_out_path
+    s = start_line - 1
+    e = end_line
 
+    print(f"Swapping lines {start_line}-{end_line} between files")
 
-       candidate_lines = bug_lines[:attempt_j1] + ref_lines[attempt_i1:attempt_i2] + bug_lines[attempt_j2:]
+    ref_segment = ref_lines[s:e]
+    bug_lines[s:e] = ref_segment
 
+    # ref_segment = ref_lines[s:e]
+    # bug_lines[s:e] = ref_segment
 
-       print(f"-> Trying swap of {swap_size} line(s) (buggy {attempt_j1+1}-{attempt_j2}, ref {attempt_i1+1}-{attempt_i2})...")
+    with open(reference_out_path, "w") as f:
+        f.writelines(ref_lines)
+    with open(buggy_out_path, "w") as f:
+        f.writelines(bug_lines)
 
-
-       if _is_swap_valid(candidate_lines):
-           print(f"-> Swap of {swap_size} line(s) compiled successfully!")
-           swapped_lines = candidate_lines
-           break
-       swap_size -= 1  # get smaller after every iteration
-  if swapped_lines is None:
-       print(f"-> No valid swap found")
-       swapped_lines = bug_lines
-  with open(reference_out_path, "w") as f:
-      f.writelines(ref_lines)
-  with open(buggy_out_path, "w") as f:
-      f.writelines(swapped_lines)
-
-
-  return reference_out_path, buggy_out_path
-
-
-
-
-
-
+    return reference_out_path, buggy_out_path
 # def insert_assert_at_line(src_path, dst_path, line_no, var_name, ref_val_str):
 #     with open(src_path, "r") as f:
 #         lines = f.readlines()
@@ -779,7 +491,7 @@ def main():
 
     with open("ref.c", "r") as f:
         referenceCode = f.read()
-    with open("stu.c", "r") as f:
+    with open("stu3.c", "r") as f:
         buggyCode = f.read()
     ref_file = "reference_to_trace.c"
     test_file = "sample_to_trace.c"
@@ -816,7 +528,6 @@ def main():
                 buggy_log = parse_trace_log(stdout) 
 
     found_diff, diff_line, diff_var, ref_val, bug_val, diffs = compare_trace_logs(ref_log, buggy_log)
-    
     # if found_diff and diff_line is not None:
     #     # if diff_var is not None and ref_val is not None:
     #     #     print(f"\nInserting asset on {diff_var} == {ref_val} at line {diff_line} in buggy file")
