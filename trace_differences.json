@@ -1,0 +1,12 @@
+[
+  {
+    "trace_index": 16,
+    "function": null,
+    "ref_line": 29,
+    "bug_line": 29,
+    "ref_var": "final_avg",
+    "bug_var": "final_avg",
+    "ref_val": "50.000000",
+    "bug_val": "40.000000"
+  }
+]

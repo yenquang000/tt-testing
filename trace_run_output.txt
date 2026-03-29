@@ -1,0 +1,439 @@
+Found libclang at: /Library/Developer/CommandLineTools/usr/lib/libclang.dylib
+
+Extracting variable roles for normalization...
+Variable names already match between files.
+ Processing Reference File: reference_to_trace.c 
+Compiling ref.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=50
+TRACE:L12:count=1
+TRACE:L19:avg=50.000000
+TRACE:L20:Returning=50.000000
+TRACE:L29:final_avg=50.000000
+Final Average: 50.000000\nTRACE:L31:Returning=0
+
+
+Processing Buggy File: sample_to_trace.c
+Compiling test.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=40
+TRACE:L12:count=1
+TRACE:L19:avg=40.000000
+TRACE:L20:Returning=40.000000
+TRACE:L29:final_avg=40.000000
+Final Average: 40.000000\nTRACE:L31:Returning=0
+
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 1 unique trace difference(s):
+
+  [1] Function: unknown, Line: 29, Var: final_avg, Ref=50.000000, Bug=40.000000
+
+Attempting individual swaps for 1 differences
+
+--- Diff 1: function 'unknown', line 29, var 'final_avg' ---
+
+Finding diffs around line 29...
+No diff block found within ±0 lines of line 29.
+
+ RERUNNING ALGORITHM (diff 1, window=0)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=50
+TRACE:L12:count=1
+TRACE:L19:avg=50.000000
+TRACE:L20:Returning=50.000000
+TRACE:L29:final_avg=50.000000
+Final Average: 50.000000\nTRACE:L31:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=40
+TRACE:L12:count=1
+TRACE:L19:avg=40.000000
+TRACE:L20:Returning=40.000000
+TRACE:L29:final_avg=40.000000
+Final Average: 40.000000\nTRACE:L31:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 1 unique trace difference(s):
+
+  [1] Function: unknown, Line: 29, Var: final_avg, Ref=50.000000, Bug=40.000000
+
+Finding diffs around line 29...
+No diff block found within ±1 lines of line 29.
+
+ RERUNNING ALGORITHM (diff 1, window=1)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=50
+TRACE:L12:count=1
+TRACE:L19:avg=50.000000
+TRACE:L20:Returning=50.000000
+TRACE:L29:final_avg=50.000000
+Final Average: 50.000000\nTRACE:L31:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=40
+TRACE:L12:count=1
+TRACE:L19:avg=40.000000
+TRACE:L20:Returning=40.000000
+TRACE:L29:final_avg=40.000000
+Final Average: 40.000000\nTRACE:L31:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 1 unique trace difference(s):
+
+  [1] Function: unknown, Line: 29, Var: final_avg, Ref=50.000000, Bug=40.000000
+
+Finding diffs around line 29...
+No diff block found within ±2 lines of line 29.
+
+ RERUNNING ALGORITHM (diff 1, window=2)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=50
+TRACE:L12:count=1
+TRACE:L19:avg=50.000000
+TRACE:L20:Returning=50.000000
+TRACE:L29:final_avg=50.000000
+Final Average: 50.000000\nTRACE:L31:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=40
+TRACE:L12:count=1
+TRACE:L19:avg=40.000000
+TRACE:L20:Returning=40.000000
+TRACE:L29:final_avg=40.000000
+Final Average: 40.000000\nTRACE:L31:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 1 unique trace difference(s):
+
+  [1] Function: unknown, Line: 29, Var: final_avg, Ref=50.000000, Bug=40.000000
+
+Finding diffs around line 29...
+No diff block found within ±3 lines of line 29.
+
+ RERUNNING ALGORITHM (diff 1, window=3)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=50
+TRACE:L12:count=1
+TRACE:L19:avg=50.000000
+TRACE:L20:Returning=50.000000
+TRACE:L29:final_avg=50.000000
+Final Average: 50.000000\nTRACE:L31:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=40
+TRACE:L12:count=1
+TRACE:L19:avg=40.000000
+TRACE:L20:Returning=40.000000
+TRACE:L29:final_avg=40.000000
+Final Average: 40.000000\nTRACE:L31:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 1 unique trace difference(s):
+
+  [1] Function: unknown, Line: 29, Var: final_avg, Ref=50.000000, Bug=40.000000
+
+Finding diffs around line 29...
+No diff block found within ±4 lines of line 29.
+
+ RERUNNING ALGORITHM (diff 1, window=4)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=50
+TRACE:L12:count=1
+TRACE:L19:avg=50.000000
+TRACE:L20:Returning=50.000000
+TRACE:L29:final_avg=50.000000
+Final Average: 50.000000\nTRACE:L31:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=40
+TRACE:L12:count=1
+TRACE:L19:avg=40.000000
+TRACE:L20:Returning=40.000000
+TRACE:L29:final_avg=40.000000
+Final Average: 40.000000\nTRACE:L31:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 1 unique trace difference(s):
+
+  [1] Function: unknown, Line: 29, Var: final_avg, Ref=50.000000, Bug=40.000000
+
+Finding diffs around line 29...
+No diff block found within ±5 lines of line 29.
+
+ RERUNNING ALGORITHM (diff 1, window=5)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=50
+TRACE:L12:count=1
+TRACE:L19:avg=50.000000
+TRACE:L20:Returning=50.000000
+TRACE:L29:final_avg=50.000000
+Final Average: 50.000000\nTRACE:L31:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L25:Entering main
+TRACE:L27:min_val=65
+TRACE:L28:num=5
+TRACE:L2:num_scores=5
+TRACE:L4:total=0
+TRACE:L5:count=0
+TRACE:L7:i=0
+TRACE:L7:i=1
+TRACE:L7:i=2
+TRACE:L7:i=3
+TRACE:L7:i=4
+TRACE:L7:i=2
+TRACE:L11:total=40
+TRACE:L12:count=1
+TRACE:L19:avg=40.000000
+TRACE:L20:Returning=40.000000
+TRACE:L29:final_avg=40.000000
+Final Average: 40.000000\nTRACE:L31:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 1 unique trace difference(s):
+
+  [1] Function: unknown, Line: 29, Var: final_avg, Ref=50.000000, Bug=40.000000
+Diff 1 in function 'unknown' at line 29 could not be fully resolved with any window size.
+
+Best partial result: swapping line 29 with window=0 reduced differences to 1.
+
+Cleaning up .c and .traced.c files...

@@ -6,11 +6,11 @@ import itertools # Used for comparing the two trace logs (zip_longest)
 import re  # Used for regular expressions, to parse the trace output from C
 import json
 import difflib # lexical-based matching library, used to compare variable names and function names for similarity
-import spacy # smeantics-based matching library, used to compare variable names and function names for similarity
-import spacy.cli
+# import spacy # smeantics-based matching library, used to compare variable names and function names for similarity
+# import spacy.cli
 
-spacy.prefer_gpu()  # Use GPU if available
-nlp = spacy.load("en_core_web_lg")  # Load the large English model for semantic similarity
+# spacy.prefer_gpu()  # Use GPU if available
+# nlp = spacy.load("en_core_web_lg")  # Load the large English model for semantic similarity
 
 # Import the necessary components from the clang library
 from clang.cindex import Index, Config, TranslationUnit, CursorKind, TypeKind
@@ -25,7 +25,7 @@ possible_paths = [
     'C:/Program Files/LLVM/bin/libclang.dll',  
 ]
 
-SWAP_WINDOW_LINES = 0
+SWAP_WINDOW_LINES = [0,1,2,3,4,5]
 
 def setup_libclang():
     #uses the possible paths to check where LLVM is in
@@ -48,7 +48,152 @@ def setup_libclang():
     print("to the 'possible_paths' list in this script.")
     return False
 
+def preprocess_c_source(source_text):
+    """Normalize C source text before analysis:
+    - Strip single-line and multi-line comments
+    - Normalize whitespace (tabs to spaces, collapse multiple spaces in code)
+    - Strip trailing whitespace per line
+    - Remove blank lines at start/end
+    - Deduplicate #include directives
+    """
+    # Strip multi-line comments (/* ... */)
+    text = re.sub(r'/\*.*?\*/', '', source_text, flags=re.DOTALL)
+    # Strip single-line comments (// ...)
+    text = re.sub(r'//[^\n]*', '', text)
+    # Replace tabs with 4 spaces
+    text = text.replace('\t', '    ')
 
+    seen_includes = set()
+    normalized_lines = []
+    for line in text.splitlines():
+        # Strip trailing whitespace
+        line = line.rstrip()
+        # Deduplicate #include lines
+        stripped = line.strip()
+        if stripped.startswith('#include'):
+            include_key = re.sub(r'\s+', ' ', stripped)
+            if include_key in seen_includes:
+                continue
+            seen_includes.add(include_key)
+        normalized_lines.append(line)
+
+    # Remove leading/trailing blank lines
+    while normalized_lines and not normalized_lines[0].strip():
+        normalized_lines.pop(0)
+    while normalized_lines and not normalized_lines[-1].strip():
+        normalized_lines.pop()
+
+    return '\n'.join(normalized_lines) + '\n'
+
+
+def normalize_source_line(line):
+    """Normalize a single C source line for comparison purposes:
+    - Collapse whitespace around operators
+    - Normalize spacing
+    """
+    s = line.strip()
+    if not s:
+        return ''
+    # Collapse multiple spaces to single
+    s = re.sub(r'\s+', ' ', s)
+    # Normalize spaces around common C operators for consistent comparison
+    # Assignment and compound assignment
+    s = re.sub(r'\s*([+\-*/%&|^]?)=\s*', r' \1= ', s)
+    # Fix '= =' back to '=='
+    s = re.sub(r'= =', '==', s)
+    # Fix '! =' back to '!='
+    s = re.sub(r'! =', '!=', s)
+    # Fix '> =' and '< =' back to '>=' and '<='
+    s = re.sub(r'> =', '>=', s)
+    s = re.sub(r'< =', '<=', s)
+    # Collapse any double-spaces introduced
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s
+
+
+def extract_variable_roles(file_path):
+    """Use clang AST to extract variable declarations and map each variable
+    to a canonical 'role' based on its position, type, and scope.
+    Returns a dict: { (func_name, var_name): canonical_role_label }
+    Keys are (function_name, variable_name) tuples to avoid collisions
+    when different functions share variable names (e.g. 'i' in two loops).
+    """
+    index = Index.create()  
+    tu = index.parse(file_path, args=['-std=c11'],
+                     options=TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD)
+    if not tu:
+        return {}
+
+    role_map = {}
+    func_var_counter = {}  # per-function counters
+
+    for node in tu.cursor.walk_preorder():
+        if not node.location.file or node.location.file.name != file_path:
+            continue
+
+        if node.kind == CursorKind.FUNCTION_DECL and node.is_definition():
+            func_name = node.spelling
+            counter = 0
+            # Map parameters by position
+            for param in node.get_arguments():
+                var_type = get_variable_type(param)
+                role_label = f"{func_name}_param{counter}_{var_type}"
+                role_map[(func_name, param.spelling)] = role_label
+                counter += 1
+            func_var_counter[func_name] = counter
+
+        elif node.kind == CursorKind.VAR_DECL:
+            # Find which function this variable belongs to
+            parent = node.semantic_parent
+            if parent and parent.kind == CursorKind.FUNCTION_DECL:
+                func_name = parent.spelling
+            else:
+                func_name = "_global"
+
+            var_type = get_variable_type(node)
+            count = func_var_counter.get(func_name, 0)
+            role_label = f"{func_name}_var{count}_{var_type}"
+            role_map[(func_name, node.spelling)] = role_label
+            func_var_counter[func_name] = count + 1
+
+    return role_map
+
+
+def build_role_mapping(ref_roles, bug_roles):
+    """Build a mapping from buggy variable names to reference variable names
+    based on matching canonical roles.
+    Both ref_roles and bug_roles have (func_name, var_name) tuple keys.
+    Returns a dict: { (func_name, buggy_var_name): ref_var_name }
+    """
+    # Invert ref_roles: role -> (func, ref_var)
+    ref_role_to_key = {}
+    for (func, var_name), role in ref_roles.items():
+        ref_role_to_key[role] = (func, var_name)
+
+    mapping = {}
+    for (bug_func, bug_var), bug_role in bug_roles.items():
+        if bug_role in ref_role_to_key:
+            ref_func, ref_var = ref_role_to_key[bug_role]
+            mapping[(bug_func, bug_var)] = ref_var
+
+    return mapping
+
+
+def normalize_trace_label(label, role_mapping, current_func=None):
+    """Normalize a trace label by mapping variable names to their canonical
+    reference-file equivalents using the scope-aware role mapping.
+    current_func is the name of the function we're currently inside
+    (tracked via 'Entering' trace entries)."""
+    if not role_mapping:
+        return label
+    # For labels like 'Entering func_name' or 'Returning', no variable to map
+    if label.startswith('Entering') or label.startswith('Returning'):
+        return label
+    # Look up (current_func, label) in the scoped role mapping
+    if current_func and (current_func, label) in role_mapping:
+        return role_mapping[(current_func, label)]
+    return label
+    
 def get_text(node):
     start = node.extent.start
     end = node.extent.end
@@ -179,7 +324,19 @@ def instrument_c_code(input_file, output_file): # This function goes through the
                 printf_format = get_printf_format(var_type)
                 inject_text = f'    printf("TRACE:L{line}:{var_name}={printf_format}\\n", {var_name}); fflush(stdout);\n'
                 add_injection(line, inject_text)  # Inject *after* this line
-
+        elif node.kind == CursorKind.FOR_STMT:
+            for child in node.get_children():
+                if child.kind == CursorKind.VAR_DECL:
+                    var_name = child.spelling
+                    var_type = get_variable_type(child)
+                    try:
+                        body = next(c for c in node.get_children() if c.kind == CursorKind.COMPOUND_STMT)
+                        body_line = body.extent.start.line
+                        printf_format = get_printf_format(var_type)
+                        inject_text = f'    printf("TRACE:L{body_line}:(LoopVar){var_name}={printf_format}\\n", {var_name}); fflush(stdout);\n'
+                        add_injection(body_line, inject_text)
+                    except StopIteration:
+                        pass
         elif node.kind.is_expression() and node.kind.name == 'BINARY_OPERATOR':
             op_text = get_text(node)  # Get the text, e.g., "avg = (float)total / count"
             # Check for assignment operators (but not '==')
@@ -246,9 +403,17 @@ def instrument_c_code(input_file, output_file): # This function goes through the
             else:
                 inject_text = f'    printf("TRACE:L{line}:Returning=(void)\\n"); fflush(stdout);\n'
                 add_injection(line, inject_text) 
+                
+    source_text = ''.join(source_lines)
+    has_stdio = '#include <stdio.h>' in source_text or '#include<stdio.h>' in source_text
+    has_assert = '#include <assert.h>' in source_text or '#include<assert.h>' in source_text
 
     with open(output_file, 'w') as f:
-        f.write('#include <stdio.h>\n#include <assert.h>\n\n')
+        if not has_stdio:
+            f.write('#include <stdio.h>\n')
+        if not has_assert:
+            f.write('#include <assert.h>\n')
+        f.write('\n')
 
         for i, line_text in enumerate(source_lines):
             current_line_num = i + 1  # Line numbers are 1-based
@@ -318,142 +483,8 @@ def _is_swap_valid(lines, tmp_path="swap_test_check.c"):
        if os.path.exists("swap_test_exe"):
            os.remove("swap_test_exe")
        if os.path.exists("swap_test_exe.exe"):
-           os.remove("swap_test_exe.exe")
+           os.remove("swap_test_exe.exe")   
 
-def build_series(log):
-    """Builds a series of variable states/values from the trace log."""
-    series = []
-    current_state = {}
-    for lineno, var, val in log:
-        if val is not None:
-            current_state[var] = val # variable is key and val is the value
-        # Make a copy of the current state and append it to the series
-        series.append( (lineno, dict(current_state)) )
-    return series
-
-def series_similarity(series1, series2):
-    """Compares two series of variable states/values and returns a similarity score."""
-    if not series1 or not series2:
-        return 0.0  # No similarity if one series is empty
-
-    total_points = min(len(series1), len(series2))
-    matching_points = 0
-
-    for (line1, state1), (line2, state2) in zip(series1, series2):
-        if line1 != line2:
-            continue  # Only compare states at the same line number
-        # Compare variable states
-        if state1 == state2:
-            matching_points += 1
-
-    return matching_points / total_points if total_points > 0 else 0.0
-
-
-def build_variable_value_series(log):
-    """
-    Build a time–ordered series of values for each variable seen in a trace log.
-    Returns a dict: { var_name: [value1, value2, ...] }.
-    """
-    series = {}
-    for _, var, val in log:
-        if val is None:
-            continue
-        key = str(var)
-        if key not in series:
-            series[key] = []
-        series[key].append(str(val))
-    return series
-
-
-def value_series_similarity(seq1, seq2):
-    """
-    Simple similarity between two value sequences.
-    - Aligns sequences by index.
-    - Rewards equal values at the same position.
-    - Penalizes big length differences.
-    Returns a score in [0, 1].
-    """
-    if not seq1 or not seq2:
-        return 0.0
-
-    len1 = len(seq1)
-    len2 = len(seq2)
-    min_len = min(len1, len2)
-    max_len = max(len1, len2)
-
-    if min_len == 0:
-        return 0.0
-
-    matching = 0
-    for a, b in itertools.zip_longest(seq1, seq2, fillvalue=None):
-        if a is None or b is None:
-            continue
-        if str(a) == str(b):
-            matching += 1
-
-    base = matching / max_len
-    length_penalty = min_len / max_len
-    return base * length_penalty
-
-
-def greedy_match_variables_by_values(ref_log, buggy_log,
-                                     value_threshold=0.6,
-                                     loose_name_threshold=0.3):
-    """
-    Greedily match reference variables to buggy variables based on how similar
-    their runtime value series are, while still preferring name-based matches.
-
-    - First builds value sequences for each variable in each log.
-    - Computes value-series similarity for every (ref_var, bug_var) pair.
-    - Keeps pairs whose:
-        * value similarity >= value_threshold, OR
-        * value similarity >= loose_name_threshold and names look equivalent.
-    - Sorts candidates by similarity and greedily picks non-conflicting pairs.
-
-    Returns: dict mapping ref_var -> bug_var.
-    """
-    ref_series = build_variable_value_series(ref_log or [])
-    bug_series = build_variable_value_series(buggy_log or [])
-
-    if not ref_series or not bug_series:
-        return {}
-
-    candidates = []
-    for ref_var, ref_seq in ref_series.items():
-        for bug_var, bug_seq in bug_series.items():
-            sim = value_series_similarity(ref_seq, bug_seq)
-            if sim <= 0.0:
-                continue
-
-            # Prefer pairs whose names already look like they correspond.
-            name_equiv = are_names_equivalent(ref_var, bug_var)
-
-            if sim >= value_threshold or (name_equiv and sim >= loose_name_threshold):
-                candidates.append((sim, ref_var, bug_var))
-
-    if not candidates:
-        return {}
-
-    # Sort by descending similarity and pick the best non-conflicting matches.
-    candidates.sort(reverse=True, key=lambda x: x[0])
-
-    ref_matched = set()
-    bug_matched = set()
-    mapping = {}
-
-    for sim, ref_var, bug_var in candidates:
-        if ref_var in ref_matched or bug_var in bug_matched:
-            continue
-        mapping[ref_var] = bug_var
-        ref_matched.add(ref_var)
-        bug_matched.add(bug_var)
-
-    if mapping:
-        print("\nGreedy variable mapping based on runtime values:")
-        for ref_var, bug_var in mapping.items():
-            print(f"  {ref_var}  ->  {bug_var}")
-
-    return mapping
 
 def run_c_executable(exe_file):
     """Runs a compiled C executable and returns its captured stdout."""
@@ -511,95 +542,217 @@ def parse_trace_log(stdout):
     return log
 
 
-def normalize_name(name):
-    """
-    Normalize variable / label names to make matching more robust.
-    - Strips whitespace
-    - Splits camelCase into separate words
-    - Normalizes underscores and multiple spaces
-    - Lowercases everything
-    """
-    if not name:
-        return "" # Returning empty string for None or empty input
-
-    s = name.strip()
-    s = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", s) # Turn camelCase into "camel Case"
-    s = re.sub(r"[_\s]+", " ", s) # Normalize underscores and excessive spaces by replacing them with single space
-    return s.lower()
-
-
-def are_names_equivalent(name1, name2, lex_cutoff = 0.8, semantic_cutoff = 0.75):
-    """
-    Determine if two variable / label names should be treated as "the same"
-    using both lexical and (optional) semantic similarity.
-
-    This relaxes strict 1:1 string equality so that small renamings like
-    "totalSum" vs "sum_total" or minor typos don't break matching.
-    """
-    n1 = normalize_name(name1)
-    n2 = normalize_name(name2)
-
-    if n1 == n2:
-        return True
-
-    # Lexical similarity (SequenceMatcher ratio in [0, 1])
-    lex_sim = difflib.SequenceMatcher(None, n1, n2).ratio()
-    if lex_sim >= lex_cutoff:
-        return True
-
-    # Optional semantic similarity via spaCy, guarded so failures don't break the pipeline
+def normalize_trace_value(val):
+    """Normalize a trace value string for robust comparison.
+    Handles int/float representation differences like '100' vs '100.000000'."""
+    if val is None:
+        return None
+    val = val.strip()
     try:
-        doc1 = nlp(n1)
-        doc2 = nlp(n2)
-        # Some spaCy models don't have real vectors; similarity falls back to a heuristic.
-        sem_sim = doc1.similarity(doc2)
-        if sem_sim >= semantic_cutoff:
+        num = float(val)
+        # If it's effectively an integer, normalize to int string
+        if num == int(num):
+            return str(int(num))
+        # Otherwise round to 6 decimal places to avoid floating-point noise
+        return f"{num:.6f}".rstrip('0').rstrip('.')
+    except (ValueError, OverflowError):
+        return val
+
+
+def compare_trace_values(ref_val, bug_val):
+    """Compare two trace values with numeric awareness.
+    Returns True if they match, False if they differ."""
+    if ref_val is None and bug_val is None:
+        return True
+    if ref_val is None or bug_val is None:
+        return False
+    # Fast path: exact string match
+    if ref_val == bug_val:
+        return True
+    # Normalize and compare
+    return normalize_trace_value(ref_val) == normalize_trace_value(bug_val)
+
+
+def compare_source_lines(ref_path, buggy_path):
+    """Fallback: compare source files line-by-line when trace-based comparison
+    cannot run (e.g., compilation or execution failure).
+    Uses normalized comparison to ignore formatting differences."""
+    print("\n SOURCE-LEVEL COMPARISON (fallback)")
+    print("Trace-based comparison unavailable. Comparing source lines directly...\n")
+
+    with open(ref_path, 'r') as f:
+        ref_lines = f.readlines()
+    with open(buggy_path, 'r') as f:
+        bug_lines = f.readlines()
+
+    diffs = []
+    max_len = max(len(ref_lines), len(bug_lines))
+    for i in range(max_len):
+        ref_line = ref_lines[i].rstrip() if i < len(ref_lines) else "(missing)"
+        bug_line = bug_lines[i].rstrip() if i < len(bug_lines) else "(missing)"
+
+        # Normalize both lines for comparison
+        ref_normalized = normalize_source_line(ref_line)
+        bug_normalized = normalize_source_line(bug_line)
+
+        # Skip empty lines (after normalization)
+        if not ref_normalized and not bug_normalized:
+            continue
+
+        if ref_normalized != bug_normalized:
+            diff_info = {
+                "source_line": i + 1,
+                "ref_text": ref_line,
+                "bug_text": bug_line,
+            }
+            diffs.append(diff_info)
+            print(f"  Line {i+1}:")
+            print(f"    Reference: {ref_line}")
+            print(f"    Buggy:     {bug_line}")
+
+    if not diffs:
+        print("No source-level differences found.")
+        return False, []
+
+    print(f"\nFound {len(diffs)} source-level difference(s).")
+    return True, diffs
+
+def align_trace_logs(ref_log, buggy_log, role_mapping=None):
+    """Align two trace logs by (line_number, label) to handle insertions/deletions.
+    Uses role_mapping to match variable names that differ between files.
+    Tracks current function context via 'Entering' trace entries for scoped lookups.
+    Returns pairs of (ref_entry_or_None, bug_entry_or_None)."""
+    if role_mapping is None:
+        role_mapping = {}
+    aligned = []
+    ri, bi = 0, 0
+    bug_func = None  # current function context for buggy log
+
+    def labels_match(r_label, b_label):
+        """Check if labels match, considering scoped role mapping."""
+        if r_label == b_label:
             return True
-    except Exception:
-        # If spaCy isn't available or similarity fails, just ignore semantic path
-        pass
+        # Map the buggy label to its reference equivalent using function context
+        mapped = role_mapping.get((bug_func, b_label), b_label)
+        return r_label == mapped
 
-    return False
+    while ri < len(ref_log) and bi < len(buggy_log):
+        r_line, r_label, r_val = ref_log[ri]
+        b_line, b_label, b_val = buggy_log[bi]
 
-def compare_trace_logs(ref_log, buggy_log):
+        # Track function context from buggy log
+        if b_label.startswith('Entering '):
+            bug_func = b_label.split(' ', 1)[1]
+
+        # If labels match (directly or via role mapping) and line numbers match
+        if labels_match(r_label, b_label) and r_line == b_line:
+            aligned.append((ref_log[ri], buggy_log[bi]))
+            ri += 1
+            bi += 1
+        # If labels match but lines differ slightly, still pair them
+        elif labels_match(r_label, b_label):
+            aligned.append((ref_log[ri], buggy_log[bi]))
+            ri += 1
+            bi += 1
+        # Look ahead: is the current ref entry found soon in buggy?
+        elif bi + 1 < len(buggy_log) and labels_match(r_label, buggy_log[bi + 1][1]):
+            aligned.append((None, buggy_log[bi]))
+            bi += 1
+        # Look ahead: is the current buggy entry found soon in ref?
+        elif ri + 1 < len(ref_log) and labels_match(ref_log[ri + 1][1], b_label):
+            aligned.append((ref_log[ri], None))
+            ri += 1
+        else:
+            # No match found nearby, pair them as a mismatch
+            aligned.append((ref_log[ri], buggy_log[bi]))
+            ri += 1
+            bi += 1
+
+    # Append remaining entries from whichever log is longer
+    while ri < len(ref_log):
+        aligned.append((ref_log[ri], None))
+        ri += 1
+    while bi < len(buggy_log):
+        aligned.append((None, buggy_log[bi]))
+        bi += 1
+
+    return aligned
+
+def compare_trace_logs(ref_log, buggy_log, **kwargs):
     print("\n TRACE COMPARISON")
     print("Comparing logs to find the first point of divergence...\n")
 
     if not ref_log or not buggy_log:
         print("Error: Could not generate one or both trace logs. Exiting.")
         return False, None, None, None, None, []
+
     diffs = []
-    first_diff = None
 
-    # Build a best-effort mapping from reference variable names to student
-    # variable names based on how their runtime value sequences behave.
-    var_mapping = greedy_match_variables_by_values(ref_log, buggy_log)
+    # Use label-aware alignment instead of positional zip_longest
+    role_mapping = kwargs.get('role_mapping', {})
+    aligned_pairs = align_trace_logs(ref_log, buggy_log, role_mapping=role_mapping)
+    call_stack = []  # Track nested function calls
+    current_func = None  # Track function context for scoped label normalization
 
-    # zip_longest compares two lists, pairing items.
-    # If one list is shorter, it fills with `fillvalue`.
-    for i, (ref_entry, buggy_entry) in enumerate(itertools.zip_longest(ref_log, buggy_log, fillvalue=(None, "(Missing)", "(Missing)"))):
+    for i, (ref_entry, buggy_entry) in enumerate(aligned_pairs):
+        ref_line = ref_entry[0] if ref_entry else None
+        ref_var = ref_entry[1] if ref_entry else "(Missing)"
+        ref_val = ref_entry[2] if ref_entry else None
+        bug_line = buggy_entry[0] if buggy_entry else None
+        bug_var = buggy_entry[1] if buggy_entry else "(Missing)"
+        bug_val = buggy_entry[2] if buggy_entry else None
 
-        ref_line, ref_var, ref_val = ref_entry
-        bug_line, bug_var, bug_val = buggy_entry
+        # Track function context from either side's "Entering" labels
+        if buggy_entry and bug_var.startswith('Entering '):
+            current_func = bug_var.split(' ', 1)[1]
+            call_stack.append(current_func)
+        elif ref_entry and ref_var.startswith('Entering '):
+            current_func = ref_var.split(' ', 1)[1]
+            call_stack.append(current_func)
+        elif buggy_entry and bug_var.startswith('Returning'):
+            if call_stack:
+                call_stack.pop()  # Exit current function
+            current_func = call_stack[-1] if call_stack else None
 
-        # Skip entries where one side is missing a value entirely
-        if ref_val is None or bug_val is None:
-            continue
-
-        # Relaxed matching: treat names as equivalent if they are lexically/semantically close,
-        # instead of requiring exact string equality, or if our runtime-series matching
-        # believes this reference variable corresponds to the given buggy variable.
-        basic_name_equiv = are_names_equivalent(str(ref_var), str(bug_var))
-        mapped_bug_for_ref = var_mapping.get(str(ref_var))
-        mapped_equiv = mapped_bug_for_ref is not None and mapped_bug_for_ref == str(bug_var)
-        names_equiv = basic_name_equiv or mapped_equiv
-        values_differ = str(ref_val) != str(bug_val)
-
-        # Record a divergence when we believe we're looking at "the same" variable / trace point
-        # but its values differ between reference and buggy runs.
-        if names_equiv and values_differ:
+        # One side is missing entirely (extra or dropped trace entry)
+        if ref_entry is None or buggy_entry is None:
             diff_info = {
                 "trace_index": i,
+                "function": current_func,
+                "ref_line": ref_line,
+                "bug_line": bug_line,
+                "ref_var": ref_var,
+                "bug_var": bug_var,
+                "ref_val": ref_val,
+                "bug_val": bug_val
+            }
+            diffs.append(diff_info)
+            continue
+
+        # Normalize labels through scoped role mapping before comparing
+        ref_var_normalized = normalize_trace_label(ref_var, {})
+        bug_var_normalized = normalize_trace_label(bug_var, role_mapping, current_func=current_func)
+
+        # Labels differ — structural mismatch (after normalization)
+        if ref_var_normalized != bug_var_normalized:
+            diff_info = {
+                "trace_index": i,
+                "function": current_func,
+                "ref_line": ref_line,
+                "bug_line": bug_line,
+                "ref_var": ref_var,
+                "bug_var": bug_var,
+                "ref_val": ref_val,
+                "bug_val": bug_val
+            }
+            diffs.append(diff_info)
+            continue
+
+        # Values differ (using robust numeric-aware comparison)
+        if not compare_trace_values(ref_val, bug_val):
+            diff_info = {
+                "trace_index": i,
+                "function": current_func,
                 "ref_line": ref_line,
                 "bug_line": bug_line,
                 "ref_var": ref_var,
@@ -609,41 +762,53 @@ def compare_trace_logs(ref_log, buggy_log):
             }
             diffs.append(diff_info)
 
-    # This handles the case where the buggy code crashed
-    if not diffs and len(ref_log) > len(buggy_log):
-        print("DIVERGENCE FOUND!")
-        print("Buggy code crashed or stopped early.")
-        idx = len(buggy_log)
-        ref_line, ref_var, ref_val = ref_log[idx]
-        # Print the next line from the reference log that was never reached
-        diff_info = {
-            "trace_index": idx,
-            "ref_line": ref_line,
-            "bug_line": None,
-            "ref_var": ref_var,
-            "bug_var": bug_var,
-            "ref_val": ref_val,
-            "bug_val": None
-        }
-        diffs.append(diff_info)
-    elif not diffs:  # If no diffs were found at all
+    seen_lines = set()
+    seen_funcs = set()
+    unique_diffs = []
+    for d in diffs:
+        line_key = (d["ref_line"], d["bug_line"])
+        func_key = d.get("function")
+        #skip duplicate lines
+        if line_key in seen_lines:
+            continue
+        seen_lines.add(line_key)
+        if func_key in seen_funcs:
+            prev_in_func = [x for x in unique_diffs if x.get("function") == func_key]
+            if prev_in_func:
+                last = prev_in_func[-1]
+                if d["bug_val"] == last["bug_val"] and d["ref_val"] == last["ref_val"]:
+                    continue
+    seen_funcs.add(func_key)
+    unique_diffs.append(d)
+    diffs = unique_diffs
+
+    if not diffs:
         print("No differences found in trace logs. The logic appears identical.")
         return False, None, None, None, None, []
+
+    print(f"Found {len(diffs)} unique trace difference(s):\n")
+    for di, d in enumerate(diffs):
+        func_label = d.get("function") or "unknown"
+        line_label = d["bug_line"] if d["bug_line"] is not None else d["ref_line"]
+        print(f"  [{di+1}] Function: {func_label}, Line: {line_label}, "
+              f"Var: {d['bug_var']}, Ref={d['ref_val']}, Bug={d['bug_val']}")
+
     try:
         with open("trace_differences.json", "w") as f:
-            json.dump(diffs, f, indent = 2)
+            json.dump(diffs, f, indent=2)
     except Exception as e:
-        print(f"Could not savve to JSON File; {e}")
-    first_diff = diffs[0]
-    first_line = first_diff["bug_line"] if first_diff["bug_line"] is not None else first_diff["ref_line"]  
-    first_var = first_diff["bug_var"] if first_diff["bug_var"] is not None else first_diff["ref_var"]
-    first_ref_var = first_diff["ref_val"]
-    first_bug_val = first_diff["bug_val"]
+        print(f"Could not save to JSON File: {e}")
 
-    return True, first_line, first_var, first_ref_var, first_bug_val, diffs
+    first_diff = diffs[0]
+    first_line = first_diff["bug_line"] if first_diff["bug_line"] is not None else first_diff["ref_line"]
+    first_var = first_diff["bug_var"] if first_diff["bug_var"] != "(Missing)" else first_diff["ref_var"]
+    first_ref_val = first_diff["ref_val"]
+    first_bug_val = first_diff["bug_val"]
+    return True, first_line, first_var, first_ref_val, first_bug_val, diffs
+
 def swap_code_region_between_files(
       reference_path, buggy_path, center_line,
-      window=SWAP_WINDOW_LINES,
+      window=0,
       reference_out_path = "reference_swapped.c", buggy_out_path="sample_swapped.c"
 ):
   with open(reference_path, "r") as f:
@@ -790,33 +955,84 @@ def main():
     with open(test_file, "w") as f:
         f.write(buggyCode)
 
+     # Extract variable roles from both files for cross-file name normalization
+    print("\nExtracting variable roles for normalization...")
+    ref_roles = extract_variable_roles(ref_file)
+    bug_roles = extract_variable_roles(test_file)
+    role_mapping = build_role_mapping(ref_roles, bug_roles)
+    if role_mapping:
+        renamed = {f"{func}:{var}": ref_var for (func, var), ref_var in role_mapping.items() if var != ref_var}
+        if renamed:
+            print(f"Variable name mapping (buggy -> ref): {renamed}")
+        else:
+            print("Variable names already match between files.")
+    else:
+        print("No variable role mapping could be built.")
+
     # Process Reference File
     print(f" Processing Reference File: {ref_file} ")
     traced_ref_file = "ref.traced.c"  # The new file we will create
     ref_exe = "ref_app"  # The compiled executable we will create
     ref_log = None
+    ref_pipeline_ok = False
     if instrument_c_code(ref_file, traced_ref_file):  # Create ref.traced.c
         if compile_c_code(traced_ref_file, ref_exe):  # Compile ref.traced.c
             stdout = run_c_executable(ref_exe)  # Runs code
             if stdout is not None:
                 print("\nCaptured Reference Output:\n" + stdout)
                 ref_log = parse_trace_log(stdout)  # Parse the log
+                ref_pipeline_ok = True
+
+    if not ref_pipeline_ok:
+        print("Warning: Reference file pipeline failed (instrument/compile/run).")
 
     # Process Buggy File
     print(f"\nProcessing Buggy File: {test_file}")
     traced_test_file = "test.traced.c"
     test_exe = "test_app"
     buggy_log = None
+    buggy_pipeline_ok = False
     if instrument_c_code(test_file, traced_test_file):  
         if compile_c_code(traced_test_file, test_exe): 
             stdout = run_c_executable(test_exe)  # (This will crash due to assert)
             if stdout is not None:
                 # This will print the partial log captured before the crash
                 print("\nCaptured Buggy Output (up to crash):\n" + stdout)
-                buggy_log = parse_trace_log(stdout) 
+                buggy_log = parse_trace_log(stdout)
+                buggy_pipeline_ok = True
 
-    found_diff, diff_line, diff_var, ref_val, bug_val, diffs = compare_trace_logs(ref_log, buggy_log)
-    
+    if not buggy_pipeline_ok:
+        print("Warning: Buggy file pipeline failed (instrument/compile/run).")
+
+    # If either pipeline failed completely, fall back to source-level comparison
+    if not ref_pipeline_ok or not buggy_pipeline_ok:
+        print("\nFalling back to source-level comparison...")
+        found_source_diff, source_diffs = compare_source_lines(ref_file, test_file)
+        if found_source_diff:
+            # Build diffs in the same format so the swap logic can use them
+            diffs = []
+            for sd in source_diffs:
+                diffs.append({
+                    "trace_index": None,
+                    "function": None,
+                    "ref_line": sd["source_line"],
+                    "bug_line": sd["source_line"],
+                    "ref_var": sd["ref_text"].strip(),
+                    "bug_var": sd["bug_text"].strip(),
+                    "ref_val": sd["ref_text"].strip(),
+                    "bug_val": sd["bug_text"].strip(),
+                })
+            found_diff = True
+            diff_line = diffs[0]["bug_line"]
+            diff_var = diffs[0]["bug_var"]
+            ref_val = diffs[0]["ref_val"]
+            bug_val = diffs[0]["bug_val"]
+        else:
+            found_diff = False
+            diff_line = diff_var = ref_val = bug_val = None
+            diffs = []
+    else:
+        found_diff, diff_line, diff_var, ref_val, bug_val, diffs = compare_trace_logs(ref_log, buggy_log, role_mapping=role_mapping)
     # if found_diff and diff_line is not None:
     #     # if diff_var is not None and ref_val is not None:
     #     #     print(f"\nInserting asset on {diff_var} == {ref_val} at line {diff_line} in buggy file")
@@ -834,58 +1050,93 @@ def main():
     #     #             if stdout is not None:
     #     #                 print("\nCaptured Reference Output:\n" + stdout)
     #     #                 ref_swapped_log = parse_trace_log(stdout)  # Parse the log
-    #     print(f"\nAttempting swap around source line {diff_line}")
-    #     ref_swapped_file, bug_swapped_file = swap_code_region_between_files(
-    #         ref_file, test_file, center_line = diff_line, window = SWAP_WINDOW_LINES,
-    #         reference_out_path="reference_swapped.c", buggy_out_path = "sample_swapped.c"
-    #     )
     if diffs:
-        print(f"Attempting individual swaps for {len(diffs)} differneces")
+        print(f"\nAttempting individual swaps for {len(diffs)} differences")
+        best_result = None  # Track the best (fewest remaining diffs) result across all attempts
+
         for idx, d in enumerate(diffs):
             line_for_swap = d["bug_line"] if d["bug_line"] is not None else d["ref_line"]
             if line_for_swap is None:
                 continue
-            ref_swapped_file = f"reference_swapped_{idx+1}.c"
-            bug_swapped_file = f"sample_swapped_{idx+1}.c"
-            ref_swapped_file, bug_swapped_file = swap_code_region_between_files(
-                ref_file,
-                test_file,
-                center_line = line_for_swap,
-                window = SWAP_WINDOW_LINES,
-                reference_out_path = ref_swapped_file,
-                buggy_out_path = bug_swapped_file
-            )
-            print("\n RERUNNING ALGORITHM")
-            print(f"\n Processing Swapped Reference File : {ref_swapped_file}")
-            traced_ref_swapped = "ref_swapped.traced.c"
-            ref_swapped_exe = "ref_swapped_app"
-            ref_swapped_log = None
+            func_label = d.get("function") or "unknown"
+            print(f"\n--- Diff {idx+1}: function '{func_label}', line {line_for_swap}, var '{d['bug_var']}' ---")
 
-            if instrument_c_code(ref_swapped_file, traced_ref_swapped):  # Create ref.traced.c
-                if compile_c_code(traced_ref_swapped, ref_swapped_exe):  # Compile ref.traced.c
-                    stdout = run_c_executable(ref_swapped_exe)  # Runs code
-                    if stdout is not None:
-                        print("\nCaptured Reference Output:\n" + stdout)
-                        ref_swapped_log = parse_trace_log(stdout)  # Parse the log
-            print(f"\nProcessing Buggy File: {test_file}")
-            traced_test_swapped = "test_swapped.traced.c"
-            test_swapped_exe = "test_swapped_app"
-            buggy_swapped_log = None
+            resolved = False
+            for window in SWAP_WINDOW_LINES:
+                ref_swapped_file = f"reference_swapped_{idx+1}.c"
+                bug_swapped_file = f"sample_swapped_{idx+1}.c"
+                swap_result = swap_code_region_between_files(
+                    ref_file,
+                    test_file,
+                    center_line=line_for_swap,
+                    window=window,
+                    reference_out_path=ref_swapped_file,
+                    buggy_out_path=bug_swapped_file
+                )
 
-            if instrument_c_code(bug_swapped_file, traced_test_swapped):  
-                if compile_c_code(traced_test_swapped, test_swapped_exe): 
-                    stdout = run_c_executable(test_swapped_exe)  # (This will crash due to assert)
-                    if stdout is not None:
-                        # This will print the partial log captured before the crash
-                        print("\nCaptured Buggy Output (up to crash):\n" + stdout)
-                        buggy_swapped_log = parse_trace_log(stdout) 
-            print("\nTRACE COMPARISON AFTER SWAP")
-            found_after, _, _, _, _,_ = compare_trace_logs(ref_swapped_log, buggy_swapped_log)
-            if not found_after:
-                diff = diffs[idx]
-                line = diff["bug_line"] if diff["bug_line"] is not None else diff["ref_line"]  
-                print(f"No differences, after swap, this is the main error at line: {line}")
+                # Skip no-op swaps (regions were identical at this window size)
+                if swap_result[0] is None:
+                    continue
+
+                ref_swapped_file, bug_swapped_file = swap_result
+                print(f"\n RERUNNING ALGORITHM (diff {idx+1}, window={window})")
+                print(f"\n Processing Swapped Reference File: {ref_swapped_file}")
+                traced_ref_swapped = "ref_swapped.traced.c"
+                ref_swapped_exe = "ref_swapped_app"
+                ref_swapped_log = None
+
+                if instrument_c_code(ref_swapped_file, traced_ref_swapped):
+                    if compile_c_code(traced_ref_swapped, ref_swapped_exe):
+                        stdout = run_c_executable(ref_swapped_exe)
+                        if stdout is not None:
+                            print("\nCaptured Reference Output:\n" + stdout)
+                            ref_swapped_log = parse_trace_log(stdout)
+
+                print(f"\nProcessing Swapped Buggy File: {bug_swapped_file}")
+                traced_test_swapped = "test_swapped.traced.c"
+                test_swapped_exe = "test_swapped_app"
+                buggy_swapped_log = None
+
+                if instrument_c_code(bug_swapped_file, traced_test_swapped):
+                    if compile_c_code(traced_test_swapped, test_swapped_exe):
+                        stdout = run_c_executable(test_swapped_exe)
+                        if stdout is not None:
+                            print("\nCaptured Buggy Output (up to crash):\n" + stdout)
+                            buggy_swapped_log = parse_trace_log(stdout)
+
+                # Guard: if either log wasn't generated (over-swap broke compilation/execution),
+                # this window size is too large or caused invalid code — skip it
+                if not ref_swapped_log or not buggy_swapped_log:
+                    print(f"Window={window} produced invalid code (compilation/execution failed). Skipping.")
+                    continue
+
+                print("\nTRACE COMPARISON AFTER SWAP")
+                found_after, _, _, _, _, remaining_diffs = compare_trace_logs(ref_swapped_log, buggy_swapped_log, role_mapping=role_mapping)
+
+                if not found_after:
+                    line = d["bug_line"] if d["bug_line"] is not None else d["ref_line"]
+                    print(f"Resolved with window={window}. Main error in function '{func_label}' at line: {line}")
+                    resolved = True
+                    break
+                else:
+                    # Swap reduced or changed diffs — track the best result
+                    remaining_count = len(remaining_diffs)
+                    if best_result is None or remaining_count < best_result["remaining_count"]:
+                        best_result = {
+                            "diff_idx": idx,
+                            "window": window,
+                            "line": line_for_swap,
+                            "remaining_count": remaining_count,
+                        }
+
+            if resolved:
                 break
+            else:
+                print(f"Diff {idx+1} in function '{func_label}' at line {line_for_swap} could not be fully resolved with any window size.")
+
+        if not resolved and best_result is not None:
+            print(f"\nBest partial result: swapping line {best_result['line']} with window={best_result['window']} "
+                  f"reduced differences to {best_result['remaining_count']}.")
     print("\nCleaning up .c and .traced.c files...")
     # Delete all the temporary files we created
     clean()
@@ -893,4 +1144,5 @@ if __name__ == "__main__":
     import contextlib
     with open("trace_run_output.txt", "w") as f:
         with contextlib.redirect_stdout(f):
+
             main()
