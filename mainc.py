@@ -265,6 +265,7 @@ def instrument_c_code(input_file, output_file): # This function goes through the
 
     # This dictionary will store our injections.
     injections = {}
+    loop_body_injected_lines = set()
 
     def add_injection(line, text): #adds the injections into the code
         if line not in injections:
@@ -296,47 +297,52 @@ def instrument_c_code(input_file, output_file): # This function goes through the
             # Create the trace string for function entry
             # We add fflush(stdout) to force C to print immediately.
             # Captures log before crash due to assert
-            inject_text = (
+            # Always inject the Entering trace first
+            add_injection(body_start_line, (
                 f'    printf("TRACE:L{body_start_line}:Entering {func_name}\\n"); '
                 f'fflush(stdout);\n'
-                )
+            ))
 
-            for param in node.get_arguments():  # Loop through all parameters
+            # Then inject each non-pointer parameter separately
+            for param in node.get_arguments():
                 var_name = param.spelling
                 var_type = get_variable_type(param)
                 if var_type == 'pointer':
-                    continue  #skip if pointer
+                    continue
                 printf_format = get_printf_format(var_type)
-                # Add trace print for the parameter
-                inject_text = f'    printf("TRACE:L{line}:{var_name}={printf_format}\\n", {var_name}); fflush(stdout);\n'
-
-            # Inject all this text after the line with the opening brace '{'
-            add_injection(body_start_line, inject_text)
+                add_injection(body_start_line, f'    printf("TRACE:L{body_start_line}:{var_name}={printf_format}\\n", {var_name}); fflush(stdout);\n')
 
         elif node.kind == CursorKind.VAR_DECL:
             var_name = node.spelling
             var_type = get_variable_type(node)
             if var_type == 'pointer': #don't trace pointers
                 continue
-            
+            is_loop_var = False
+            for ancestor in tu.cursor.walk_preorder():
+                if ancestor.kind == CursorKind.FOR_STMT:
+                    # The init clause of a for loop comes before the body
+                    # Check if this VAR_DECL's location is inside the for stmt
+                    # but NOT inside its body (COMPOUND_STMT)
+                    for_start = ancestor.extent.start.offset
+                    for_end = ancestor.extent.end.offset
+                    node_offset = node.extent.start.offset
+                    if for_start <= node_offset <= for_end:
+                        try:
+                            body = next(c for c in ancestor.get_children()
+                                       if c.kind == CursorKind.COMPOUND_STMT)
+                            body_start = body.extent.start.offset
+                            if node_offset < body_start:
+                                is_loop_var = True
+                                break
+                        except StopIteration:
+                            pass
+            if is_loop_var:
+                continue
             # Check if it has an initializer (e.g., '= 0')
             if any(c.kind.is_expression() for c in node.get_children()):
                 printf_format = get_printf_format(var_type)
                 inject_text = f'    printf("TRACE:L{line}:{var_name}={printf_format}\\n", {var_name}); fflush(stdout);\n'
                 add_injection(line, inject_text)  # Inject *after* this line
-        elif node.kind == CursorKind.FOR_STMT:
-            for child in node.get_children():
-                if child.kind == CursorKind.VAR_DECL:
-                    var_name = child.spelling
-                    var_type = get_variable_type(child)
-                    try:
-                        body = next(c for c in node.get_children() if c.kind == CursorKind.COMPOUND_STMT)
-                        body_line = body.extent.start.line
-                        printf_format = get_printf_format(var_type)
-                        inject_text = f'    printf("TRACE:L{body_line}:(LoopVar){var_name}={printf_format}\\n", {var_name}); fflush(stdout);\n'
-                        add_injection(body_line, inject_text)
-                    except StopIteration:
-                        pass
         elif node.kind.is_expression() and node.kind.name == 'BINARY_OPERATOR':
             op_text = get_text(node)  # Get the text, e.g., "avg = (float)total / count"
             # Check for assignment operators (but not '==')
@@ -356,6 +362,8 @@ def instrument_c_code(input_file, output_file): # This function goes through the
                 add_injection(line, inject_text)  
         
         elif node.kind == CursorKind.COMPOUND_ASSIGNMENT_OPERATOR: 
+            if line in loop_body_injected_lines:
+                continue
             lhs = list(node.get_children())[0] 
             var_name = get_text(lhs)
             if not var_name:
@@ -370,6 +378,8 @@ def instrument_c_code(input_file, output_file): # This function goes through the
             add_injection(line, inject_text) 
 
         elif node.kind.is_expression() and node.kind.name == 'UNARY_OPERATOR':
+            if line in loop_body_injected_lines:
+                continue
             op_text = get_text(node)
             if '++' in op_text or '--' in op_text: 
                 child = list(node.get_children())[0] 
@@ -419,23 +429,27 @@ def instrument_c_code(input_file, output_file): # This function goes through the
             current_line_num = i + 1  # Line numbers are 1-based
 
             # Check for injections that go *before* this line (e.g., return)
+                        # Check for injections that go *before* this line (e.g., return)
             if current_line_num in injections and any("Returning" in inj for inj in injections[current_line_num]):
-                for injection in injections[current_line_num]:
-                    if "Returning" in injection:
-                        # Get the indentation of the original line
-                        indentation = len(line_text) - len(line_text.lstrip(' '))
-                        f.write(' ' * indentation + injection)  # Write injection with same indent
+                stripped = line_text.strip()
+                if not (stripped.startswith('for ') or stripped.startswith('for(')):
+                    for injection in injections[current_line_num]:
+                        if "Returning" in injection:
+                            indentation = len(line_text) - len(line_text.lstrip(' '))
+                            f.write(' ' * indentation + injection)
 
             # Write the original line itself
             f.write(line_text)
 
             # Check for injections that go *after* this line (e.g., assign, func entry)
             if current_line_num in injections and not any("Returning" in inj for inj in injections[current_line_num]):
-                for injection in injections[current_line_num]:
-                    indentation = len(line_text) - len(line_text.lstrip(' '))
-                    if '{' in line_text:  # If it's a function entry line
-                        indentation += 4  # Add 4 spaces for body indentation
-                    f.write(' ' * indentation + injection)  # Write injection
+                stripped = line_text.strip()
+                if not (stripped.startswith('for ') or stripped.startswith('for(')):
+                    for injection in injections[current_line_num]:
+                        indentation = len(line_text) - len(line_text.lstrip(' '))
+                        if '{' in line_text and any("Entering" in inj for inj in injections[current_line_num]):
+                            indentation += 4
+                        f.write(' ' * indentation + injection)
 
     return True  # Success
 
@@ -471,19 +485,27 @@ def compile_c_code(c_file, exe_file):
 def _is_swap_valid(lines, tmp_path="swap_test_check.c"):
    try:
        with open(tmp_path, "w") as f:
+           f.write('#include <stdio.h>\n')
+           f.write('#include <assert.h>\n')
            f.writelines(lines)
        result = compile_c_code(tmp_path, "swap_test_exe")
        return result
    except Exception:
        return False
    finally:
-       # clean up temp files
-       if os.path.exists(tmp_path):
-           os.remove(tmp_path)
-       if os.path.exists("swap_test_exe"):
-           os.remove("swap_test_exe")
-       if os.path.exists("swap_test_exe.exe"):
-           os.remove("swap_test_exe.exe")   
+       import time
+       for path in [tmp_path, "swap_test_exe", "swap_test_exe.exe"]:
+           for _ in range(5):
+                try:
+                    # clean up temp files
+                    if os.path.exists(tmp_path):
+                        os.remove(tmp_path)
+                    if os.path.exists("swap_test_exe"):
+                        os.remove("swap_test_exe")
+                    if os.path.exists("swap_test_exe.exe"):
+                        os.remove("swap_test_exe.exe") 
+                except PermissionError:
+                   time.sleep(0.1)  
 
 
 def run_c_executable(exe_file):
@@ -693,6 +715,7 @@ def compare_trace_logs(ref_log, buggy_log, **kwargs):
     aligned_pairs = align_trace_logs(ref_log, buggy_log, role_mapping=role_mapping)
     call_stack = []  # Track nested function calls
     current_func = None  # Track function context for scoped label normalization
+    returning_func = None  # Captured before popping, used for Returning diffs
 
     for i, (ref_entry, buggy_entry) in enumerate(aligned_pairs):
         ref_line = ref_entry[0] if ref_entry else None
@@ -710,15 +733,20 @@ def compare_trace_logs(ref_log, buggy_log, **kwargs):
             current_func = ref_var.split(' ', 1)[1]
             call_stack.append(current_func)
         elif buggy_entry and bug_var.startswith('Returning'):
+            returning_func = call_stack[-1] if call_stack else None
             if call_stack:
-                call_stack.pop()  # Exit current function
+                call_stack.pop()
             current_func = call_stack[-1] if call_stack else None
+
+        # Choose which function label to record for this entry
+        is_returning = bug_var.startswith('Returning') if bug_var else False
+        func_for_diff = returning_func if is_returning else current_func
 
         # One side is missing entirely (extra or dropped trace entry)
         if ref_entry is None or buggy_entry is None:
             diff_info = {
                 "trace_index": i,
-                "function": current_func,
+                "function": func_for_diff,
                 "ref_line": ref_line,
                 "bug_line": bug_line,
                 "ref_var": ref_var,
@@ -737,7 +765,7 @@ def compare_trace_logs(ref_log, buggy_log, **kwargs):
         if ref_var_normalized != bug_var_normalized:
             diff_info = {
                 "trace_index": i,
-                "function": current_func,
+                "function": func_for_diff,
                 "ref_line": ref_line,
                 "bug_line": bug_line,
                 "ref_var": ref_var,
@@ -752,7 +780,7 @@ def compare_trace_logs(ref_log, buggy_log, **kwargs):
         if not compare_trace_values(ref_val, bug_val):
             diff_info = {
                 "trace_index": i,
-                "function": current_func,
+                "function": func_for_diff,
                 "ref_line": ref_line,
                 "bug_line": bug_line,
                 "ref_var": ref_var,
@@ -766,7 +794,7 @@ def compare_trace_logs(ref_log, buggy_log, **kwargs):
     seen_funcs = set()
     unique_diffs = []
     for d in diffs:
-        line_key = (d["ref_line"], d["bug_line"])
+        line_key = (d["ref_line"], d["bug_line"], d["ref_var"], d["bug_var"])
         func_key = d.get("function")
         #skip duplicate lines
         if line_key in seen_lines:
@@ -778,8 +806,8 @@ def compare_trace_logs(ref_log, buggy_log, **kwargs):
                 last = prev_in_func[-1]
                 if d["bug_val"] == last["bug_val"] and d["ref_val"] == last["ref_val"]:
                     continue
-    seen_funcs.add(func_key)
-    unique_diffs.append(d)
+        seen_funcs.add(func_key)
+        unique_diffs.append(d)
     diffs = unique_diffs
 
     if not diffs:
@@ -845,12 +873,7 @@ def swap_code_region_between_files(
           candidates.append((distance, tag, i1, i2, j1, j2))
   if not candidates:
       print(f"No diff block found within ±{window} lines of line {center_line}.")
-    
-      with open(reference_out_path, "w") as f:
-          f.writelines(ref_lines)
-      with open(buggy_out_path, "w") as f:
-          f.writelines(bug_lines)
-      return reference_out_path, buggy_out_path
+      return None, None
  #select the candidate for patching
   tag_priority = {'replace': 0, 'delete': 1, 'insert': 2}
  #sort the list by distance(in ascending order), then by tag priority
