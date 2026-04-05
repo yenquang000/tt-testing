@@ -165,6 +165,7 @@ def build_role_mapping(ref_roles, bug_roles):
     Both ref_roles and bug_roles have (func_name, var_name) tuple keys.
     Returns a dict: { (func_name, buggy_var_name): ref_var_name }
     """
+    ref_keys = set(ref_roles.keys())
     # Invert ref_roles: role -> (func, ref_var)
     ref_role_to_key = {}
     for (func, var_name), role in ref_roles.items():
@@ -172,10 +173,11 @@ def build_role_mapping(ref_roles, bug_roles):
 
     mapping = {}
     for (bug_func, bug_var), bug_role in bug_roles.items():
-        if bug_role in ref_role_to_key:
+        if (bug_func, bug_var) in ref_keys:
+            mapping[(bug_func, bug_var)] = bug_var
+        elif bug_role in ref_role_to_key:
             ref_func, ref_var = ref_role_to_key[bug_role]
             mapping[(bug_func, bug_var)] = ref_var
-
     return mapping
 
 
@@ -639,65 +641,101 @@ def compare_source_lines(ref_path, buggy_path):
     print(f"\nFound {len(diffs)} source-level difference(s).")
     return True, diffs
 
+def score_entry_match(ref_entry, bug_entry, role_mapping, bug_func):
+    """Score how well two trace entries match each other.
+    Returns a number: higher = better match, negative = mismatch."""
+    if ref_entry is None or bug_entry is None:
+        return -1  
+
+    r_line, r_label, r_val = ref_entry
+    b_line, b_label, b_val = bug_entry
+
+   
+    mapped = role_mapping.get((bug_func, b_label), b_label)
+    labels_match = (r_label == mapped) or (r_label == b_label)
+
+    if not labels_match:
+        return -2 
+
+
+    if r_label.startswith('Entering') or r_label.startswith('Returning'):
+        if r_val is None and b_val is None:
+            return 5 
+        if r_val is not None and b_val is not None:
+            return 4 if normalize_trace_value(r_val) == normalize_trace_value(b_val) else 3
+
+    if r_val is None and b_val is None:
+        return 2
+    if r_val is not None and b_val is not None:
+        if normalize_trace_value(r_val) == normalize_trace_value(b_val):
+            return 3 
+        else:
+            return 2  
+    return 1 
+
+
 def align_trace_logs(ref_log, buggy_log, role_mapping=None):
-    """Align two trace logs by (line_number, label) to handle insertions/deletions.
-    Uses role_mapping to match variable names that differ between files.
-    Tracks current function context via 'Entering' trace entries for scoped lookups.
+    """Align two trace logs using dynamic programming (similar to sequence alignment).
+    This handles cases where ref and buggy have different structure — extra calls,
+    renamed variables, reordered statements — without falling apart after one mismatch.
     Returns pairs of (ref_entry_or_None, bug_entry_or_None)."""
     if role_mapping is None:
         role_mapping = {}
-    aligned = []
-    ri, bi = 0, 0
-    bug_func = None  # current function context for buggy log
 
-    def labels_match(r_label, b_label):
-        """Check if labels match, considering scoped role mapping."""
-        if r_label == b_label:
-            return True
-        # Map the buggy label to its reference equivalent using function context
-        mapped = role_mapping.get((bug_func, b_label), b_label)
-        return r_label == mapped
+    n = len(ref_log)
+    m = len(buggy_log)
 
-    while ri < len(ref_log) and bi < len(buggy_log):
-        r_line, r_label, r_val = ref_log[ri]
-        b_line, b_label, b_val = buggy_log[bi]
-
-        # Track function context from buggy log
+    
+    bug_func_at = {}  
+    bug_func = None
+    for bi, (b_line, b_label, b_val) in enumerate(buggy_log):
         if b_label.startswith('Entering '):
             bug_func = b_label.split(' ', 1)[1]
+        bug_func_at[bi] = bug_func
 
-        # If labels match (directly or via role mapping) and line numbers match
-        if labels_match(r_label, b_label) and r_line == b_line:
-            aligned.append((ref_log[ri], buggy_log[bi]))
-            ri += 1
-            bi += 1
-        # If labels match but lines differ slightly, still pair them
-        elif labels_match(r_label, b_label):
-            aligned.append((ref_log[ri], buggy_log[bi]))
-            ri += 1
-            bi += 1
-        # Look ahead: is the current ref entry found soon in buggy?
-        elif bi + 1 < len(buggy_log) and labels_match(r_label, buggy_log[bi + 1][1]):
-            aligned.append((None, buggy_log[bi]))
-            bi += 1
-        # Look ahead: is the current buggy entry found soon in ref?
-        elif ri + 1 < len(ref_log) and labels_match(ref_log[ri + 1][1], b_label):
-            aligned.append((ref_log[ri], None))
-            ri += 1
+    GAP = -1  
+
+    
+    # dp[i][j] = aligning ref_log[:i] with buggy_log[:j]
+    dp = [[0] * (m + 1) for _ in range(n + 1)]
+
+   
+    for i in range(1, n + 1):
+        dp[i][0] = dp[i-1][0] + GAP
+    for j in range(1, m + 1):
+        dp[0][j] = dp[0][j-1] + GAP
+
+    
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            bf = bug_func_at.get(j - 1)
+            match_score = score_entry_match(ref_log[i-1], buggy_log[j-1], role_mapping, bf)
+            dp[i][j] = max(
+                dp[i-1][j-1] + match_score, 
+                dp[i-1][j] + GAP,             
+                dp[i][j-1] + GAP              
+            )
+
+  
+    aligned = []
+    i, j = n, m
+    while i > 0 or j > 0:
+        if i > 0 and j > 0:
+            bf = bug_func_at.get(j - 1)
+            match_score = score_entry_match(ref_log[i-1], buggy_log[j-1], role_mapping, bf)
+            if dp[i][j] == dp[i-1][j-1] + match_score:
+                aligned.append((ref_log[i-1], buggy_log[j-1]))
+                i -= 1
+                j -= 1
+                continue
+        if i > 0 and dp[i][j] == dp[i-1][j] + GAP:
+            aligned.append((ref_log[i-1], None))
+            i -= 1
         else:
-            # No match found nearby, pair them as a mismatch
-            aligned.append((ref_log[ri], buggy_log[bi]))
-            ri += 1
-            bi += 1
+            aligned.append((None, buggy_log[j-1]))
+            j -= 1
 
-    # Append remaining entries from whichever log is longer
-    while ri < len(ref_log):
-        aligned.append((ref_log[ri], None))
-        ri += 1
-    while bi < len(buggy_log):
-        aligned.append((None, buggy_log[bi]))
-        bi += 1
-
+    aligned.reverse() 
     return aligned
 
 def compare_trace_logs(ref_log, buggy_log, **kwargs):
@@ -708,24 +746,46 @@ def compare_trace_logs(ref_log, buggy_log, **kwargs):
         print("Error: Could not generate one or both trace logs. Exiting.")
         return False, None, None, None, None, []
 
-    diffs = []
-
-    # Use label-aware alignment instead of positional zip_longest
     role_mapping = kwargs.get('role_mapping', {})
+
+    if len(buggy_log) < len(ref_log) * 0.5:
+        print("Warning: Buggy log is significantly shorter than reference — likely an early crash.")
+        last_matched = buggy_log[-1] if buggy_log else None
+        if last_matched:
+            b_line, b_label, b_val = last_matched
+            crash_diff = {
+                "trace_index": len(buggy_log),
+                "function": b_label.split(' ', 1)[1] if b_label.startswith('Entering') else None,
+                "ref_line": None,
+                "bug_line": b_line,
+                "ref_var": "(Missing)",
+                "bug_var": b_label,
+                "ref_val": None,
+                "bug_val": b_val,
+                "note": "Program likely crashed here"
+            }
+            print(f"Last entry before crash: '{b_label}' at line {b_line}")
+            try:
+                with open("trace_differences.json", "w") as f:
+                    json.dump([crash_diff], f, indent=2)
+            except Exception as e:
+                print(f"Could not save to JSON file: {e}")
+            return True, b_line, b_label, None, b_val, [crash_diff]
+
     aligned_pairs = align_trace_logs(ref_log, buggy_log, role_mapping=role_mapping)
-    call_stack = []  # Track nested function calls
-    current_func = None  # Track function context for scoped label normalization
-    returning_func = None  # Captured before popping, used for Returning diffs
+    diffs = []
+    call_stack = []
+    current_func = None
+    returning_func = None
 
     for i, (ref_entry, buggy_entry) in enumerate(aligned_pairs):
         ref_line = ref_entry[0] if ref_entry else None
-        ref_var = ref_entry[1] if ref_entry else "(Missing)"
-        ref_val = ref_entry[2] if ref_entry else None
+        ref_var  = ref_entry[1] if ref_entry else "(Missing)"
+        ref_val  = ref_entry[2] if ref_entry else None
         bug_line = buggy_entry[0] if buggy_entry else None
-        bug_var = buggy_entry[1] if buggy_entry else "(Missing)"
-        bug_val = buggy_entry[2] if buggy_entry else None
+        bug_var  = buggy_entry[1] if buggy_entry else "(Missing)"
+        bug_val  = buggy_entry[2] if buggy_entry else None
 
-        # Track function context from either side's "Entering" labels
         if buggy_entry and bug_var.startswith('Entering '):
             current_func = bug_var.split(' ', 1)[1]
             call_stack.append(current_func)
@@ -738,77 +798,97 @@ def compare_trace_logs(ref_log, buggy_log, **kwargs):
                 call_stack.pop()
             current_func = call_stack[-1] if call_stack else None
 
-        # Choose which function label to record for this entry
         is_returning = bug_var.startswith('Returning') if bug_var else False
         func_for_diff = returning_func if is_returning else current_func
 
-        # One side is missing entirely (extra or dropped trace entry)
+    
         if ref_entry is None or buggy_entry is None:
-            diff_info = {
+            diffs.append({
                 "trace_index": i,
                 "function": func_for_diff,
-                "ref_line": ref_line,
-                "bug_line": bug_line,
-                "ref_var": ref_var,
-                "bug_var": bug_var,
-                "ref_val": ref_val,
-                "bug_val": bug_val
-            }
-            diffs.append(diff_info)
+                "ref_line": ref_line, "bug_line": bug_line,
+                "ref_var": ref_var,   "bug_var": bug_var,
+                "ref_val": ref_val,   "bug_val": bug_val
+            })
             continue
 
-        # Normalize labels through scoped role mapping before comparing
         ref_var_normalized = normalize_trace_label(ref_var, {})
         bug_var_normalized = normalize_trace_label(bug_var, role_mapping, current_func=current_func)
 
-        # Labels differ — structural mismatch (after normalization)
         if ref_var_normalized != bug_var_normalized:
-            diff_info = {
+            diffs.append({
                 "trace_index": i,
                 "function": func_for_diff,
-                "ref_line": ref_line,
-                "bug_line": bug_line,
-                "ref_var": ref_var,
-                "bug_var": bug_var,
-                "ref_val": ref_val,
-                "bug_val": bug_val
-            }
-            diffs.append(diff_info)
+                "ref_line": ref_line, "bug_line": bug_line,
+                "ref_var": ref_var,   "bug_var": bug_var,
+                "ref_val": ref_val,   "bug_val": bug_val
+            })
             continue
 
-        # Values differ (using robust numeric-aware comparison)
+       
         if not compare_trace_values(ref_val, bug_val):
-            diff_info = {
+            diffs.append({
                 "trace_index": i,
                 "function": func_for_diff,
-                "ref_line": ref_line,
-                "bug_line": bug_line,
-                "ref_var": ref_var,
-                "bug_var": bug_var,
-                "ref_val": ref_val,
-                "bug_val": bug_val
-            }
-            diffs.append(diff_info)
+                "ref_line": ref_line, "bug_line": bug_line,
+                "ref_var": ref_var,   "bug_var": bug_var,
+                "ref_val": ref_val,   "bug_val": bug_val
+            })
+
+
+    ref_var_values = {}
+    for _, label, val in ref_log:
+        if val is not None and not label.startswith('Entering') and not label.startswith('Returning'):
+            ref_var_values.setdefault(label, set()).add(normalize_trace_value(val))
+
+    bug_var_values = {}
+    for _, label, val in buggy_log:
+        if val is not None and not label.startswith('Entering') and not label.startswith('Returning'):
+            bug_var_values.setdefault(label, set()).add(normalize_trace_value(val))
+
+    filtered_diffs = []
+    for d in diffs:
+        ref_var = d["ref_var"]
+        bug_var = d["bug_var"]
+        ref_val_n = normalize_trace_value(d["ref_val"]) if d["ref_val"] else None
+        bug_val_n = normalize_trace_value(d["bug_val"]) if d["bug_val"] else None
+
+        if ref_var == "(Missing)":
+            if bug_var in ref_var_values and bug_val_n in ref_var_values.get(bug_var, set()):
+                continue
+        elif bug_var == "(Missing)":
+            if ref_var in bug_var_values and ref_val_n in bug_var_values.get(ref_var, set()):
+                continue
+
+        filtered_diffs.append(d)
+    diffs = filtered_diffs
 
     seen_lines = set()
-    seen_funcs = set()
     unique_diffs = []
     for d in diffs:
         line_key = (d["ref_line"], d["bug_line"], d["ref_var"], d["bug_var"])
-        func_key = d.get("function")
-        #skip duplicate lines
         if line_key in seen_lines:
             continue
         seen_lines.add(line_key)
-        if func_key in seen_funcs:
-            prev_in_func = [x for x in unique_diffs if x.get("function") == func_key]
-            if prev_in_func:
-                last = prev_in_func[-1]
-                if d["bug_val"] == last["bug_val"] and d["ref_val"] == last["ref_val"]:
-                    continue
-        seen_funcs.add(func_key)
         unique_diffs.append(d)
     diffs = unique_diffs
+
+    
+    seen_func_val_pairs = {}
+    final_diffs = []
+    for d in diffs:
+        func_key = d.get("function")
+        val_pair = (
+            normalize_trace_value(d["ref_val"]),
+            normalize_trace_value(d["bug_val"])
+        )
+        if func_key not in seen_func_val_pairs:
+            seen_func_val_pairs[func_key] = set()
+        if val_pair in seen_func_val_pairs[func_key]:
+            continue  
+        seen_func_val_pairs[func_key].add(val_pair)
+        final_diffs.append(d)
+    diffs = final_diffs
 
     if not diffs:
         print("No differences found in trace logs. The logic appears identical.")
@@ -825,15 +905,14 @@ def compare_trace_logs(ref_log, buggy_log, **kwargs):
         with open("trace_differences.json", "w") as f:
             json.dump(diffs, f, indent=2)
     except Exception as e:
-        print(f"Could not save to JSON File: {e}")
+        print(f"Could not save to JSON file: {e}")
 
     first_diff = diffs[0]
     first_line = first_diff["bug_line"] if first_diff["bug_line"] is not None else first_diff["ref_line"]
-    first_var = first_diff["bug_var"] if first_diff["bug_var"] != "(Missing)" else first_diff["ref_var"]
+    first_var  = first_diff["bug_var"] if first_diff["bug_var"] != "(Missing)" else first_diff["ref_var"]
     first_ref_val = first_diff["ref_val"]
     first_bug_val = first_diff["bug_val"]
     return True, first_line, first_var, first_ref_val, first_bug_val, diffs
-
 def swap_code_region_between_files(
       reference_path, buggy_path, center_line,
       window=0,

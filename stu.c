@@ -1,14 +1,19 @@
-int compute_magic_number(int a, int b)
+#include <stdio.h>
+
+int math_stuff(int x)
 {
-    int sum = a + b;
-    int diff = a + b; // BUG: Should be subtraction (a - b)
-    int result = sum * diff;
-    return result;
+
+    int c = x + 3;
+    int d = x + 4;
+    int a = x + 1;
+    int b = x + 2;
+    // BUG: Added + 1
+    return a + b + c + d + 1;
 }
 
 int main()
 {
-    int ans = compute_magic_number(10, 4);
-    printf("Answer: %d\n", ans);
+    int ans = math_stuff(10);
+    printf("Result: %d\n", ans);
     return 0;
 }

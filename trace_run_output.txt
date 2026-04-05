@@ -6,54 +6,81 @@ Variable names already match between files.
 Compiling ref.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L10:Entering main
-TRACE:L2:Entering compute_magic_number
-TRACE:L2:a=10
-TRACE:L2:b=4
-TRACE:L3:sum=14
-TRACE:L4:diff=6
-TRACE:L5:result=84
-TRACE:L6:Returning=84
-TRACE:L11:ans=84
-Answer: 84
-TRACE:L13:Returning=0
+TRACE:L13:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L5:a=11
+TRACE:L6:b=12
+TRACE:L7:c=13
+TRACE:L8:d=14
+TRACE:L9:Returning=50
+TRACE:L14:ans=50
+Result: 50
+TRACE:L16:Returning=0
 
 
 Processing Buggy File: sample_to_trace.c
 Compiling test.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L10:Entering main
-TRACE:L2:Entering compute_magic_number
-TRACE:L2:a=10
-TRACE:L2:b=4
-TRACE:L3:sum=14
-TRACE:L4:diff=14
-TRACE:L5:result=196
-TRACE:L6:Returning=196
-TRACE:L11:ans=196
-Answer: 196
-TRACE:L13:Returning=0
+TRACE:L15:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L6:c=13
+TRACE:L7:d=14
+TRACE:L8:a=11
+TRACE:L9:b=12
+TRACE:L11:Returning=51
+TRACE:L16:ans=51
+Result: 51
+TRACE:L18:Returning=0
 
 
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-Found 3 unique trace difference(s):
+Found 2 unique trace difference(s):
 
-  [1] Function: compute_magic_number, Line: 4, Var: diff, Ref=6, Bug=14
-  [2] Function: compute_magic_number, Line: 5, Var: result, Ref=84, Bug=196
-  [3] Function: main, Line: 11, Var: ans, Ref=84, Bug=196
+  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
+  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
 
-Attempting individual swaps for 3 differences
+Attempting individual swaps for 2 differences
 
---- Diff 1: function 'compute_magic_number', line 4, var 'diff' ---
+--- Diff 1: function 'math_stuff', line 11, var 'Returning' ---
 
-Finding diffs around line 4...
+Finding diffs around line 11...
 -> Best match Diff type: 'replace', distance: 0 lines
--> Trying swap of 1 line(s) (buggy 4-4, ref 4-4)...
+-> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
 Compiling swap_test_check.c using gcc...
--> Swap of 1 line(s) compiled successfully!
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:9: error: redefinition of 'c'
+   12 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+swap_test_check.c:13:9: error: redefinition of 'd'
+   13 |     int d = x + 4;
+      |         ^
+swap_test_check.c:9:9: note: previous definition is here
+    9 |     int d = x + 4;
+      |         ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:9: error: redefinition of 'c'
+   13 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found
 
  RERUNNING ALGORITHM (diff 1, window=0)
 
@@ -61,34 +88,34 @@ Compiling swap_test_check.c using gcc...
 Compiling ref_swapped.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L10:Entering main
-TRACE:L2:Entering compute_magic_number
-TRACE:L2:a=10
-TRACE:L2:b=4
-TRACE:L3:sum=14
-TRACE:L4:diff=6
-TRACE:L5:result=84
-TRACE:L6:Returning=84
-TRACE:L11:ans=84
-Answer: 84
-TRACE:L13:Returning=0
+TRACE:L13:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L5:a=11
+TRACE:L6:b=12
+TRACE:L7:c=13
+TRACE:L8:d=14
+TRACE:L9:Returning=50
+TRACE:L14:ans=50
+Result: 50
+TRACE:L16:Returning=0
 
 
 Processing Swapped Buggy File: sample_swapped_1.c
 Compiling test_swapped.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L10:Entering main
-TRACE:L2:Entering compute_magic_number
-TRACE:L2:a=10
-TRACE:L2:b=4
-TRACE:L3:sum=14
-TRACE:L4:diff=6
-TRACE:L5:result=84
-TRACE:L6:Returning=84
-TRACE:L11:ans=84
-Answer: 84
-TRACE:L13:Returning=0
+TRACE:L15:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L6:c=13
+TRACE:L7:d=14
+TRACE:L8:a=11
+TRACE:L9:b=12
+TRACE:L11:Returning=51
+TRACE:L16:ans=51
+Result: 51
+TRACE:L18:Returning=0
 
 
 TRACE COMPARISON AFTER SWAP
@@ -96,7 +123,595 @@ TRACE COMPARISON AFTER SWAP
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-No differences found in trace logs. The logic appears identical.
-Resolved with window=0. Main error in function 'compute_magic_number' at line: 4
+Found 2 unique trace difference(s):
+
+  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
+  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:9: error: redefinition of 'c'
+   12 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+swap_test_check.c:13:9: error: redefinition of 'd'
+   13 |     int d = x + 4;
+      |         ^
+swap_test_check.c:9:9: note: previous definition is here
+    9 |     int d = x + 4;
+      |         ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:9: error: redefinition of 'c'
+   13 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found
+
+ RERUNNING ALGORITHM (diff 1, window=1)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L13:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L5:a=11
+TRACE:L6:b=12
+TRACE:L7:c=13
+TRACE:L8:d=14
+TRACE:L9:Returning=50
+TRACE:L14:ans=50
+Result: 50
+TRACE:L16:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L6:c=13
+TRACE:L7:d=14
+TRACE:L8:a=11
+TRACE:L9:b=12
+TRACE:L11:Returning=51
+TRACE:L16:ans=51
+Result: 51
+TRACE:L18:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 2 unique trace difference(s):
+
+  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
+  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:9: error: redefinition of 'c'
+   12 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+swap_test_check.c:13:9: error: redefinition of 'd'
+   13 |     int d = x + 4;
+      |         ^
+swap_test_check.c:9:9: note: previous definition is here
+    9 |     int d = x + 4;
+      |         ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:9: error: redefinition of 'c'
+   13 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found
+
+ RERUNNING ALGORITHM (diff 1, window=2)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L13:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L5:a=11
+TRACE:L6:b=12
+TRACE:L7:c=13
+TRACE:L8:d=14
+TRACE:L9:Returning=50
+TRACE:L14:ans=50
+Result: 50
+TRACE:L16:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L6:c=13
+TRACE:L7:d=14
+TRACE:L8:a=11
+TRACE:L9:b=12
+TRACE:L11:Returning=51
+TRACE:L16:ans=51
+Result: 51
+TRACE:L18:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 2 unique trace difference(s):
+
+  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
+  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:9: error: redefinition of 'c'
+   12 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+swap_test_check.c:13:9: error: redefinition of 'd'
+   13 |     int d = x + 4;
+      |         ^
+swap_test_check.c:9:9: note: previous definition is here
+    9 |     int d = x + 4;
+      |         ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:9: error: redefinition of 'c'
+   13 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found
+
+ RERUNNING ALGORITHM (diff 1, window=3)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L13:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L5:a=11
+TRACE:L6:b=12
+TRACE:L7:c=13
+TRACE:L8:d=14
+TRACE:L9:Returning=50
+TRACE:L14:ans=50
+Result: 50
+TRACE:L16:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L6:c=13
+TRACE:L7:d=14
+TRACE:L8:a=11
+TRACE:L9:b=12
+TRACE:L11:Returning=51
+TRACE:L16:ans=51
+Result: 51
+TRACE:L18:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 2 unique trace difference(s):
+
+  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
+  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:9: error: redefinition of 'c'
+   12 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+swap_test_check.c:13:9: error: redefinition of 'd'
+   13 |     int d = x + 4;
+      |         ^
+swap_test_check.c:9:9: note: previous definition is here
+    9 |     int d = x + 4;
+      |         ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:9: error: redefinition of 'c'
+   13 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found
+
+ RERUNNING ALGORITHM (diff 1, window=4)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L13:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L5:a=11
+TRACE:L6:b=12
+TRACE:L7:c=13
+TRACE:L8:d=14
+TRACE:L9:Returning=50
+TRACE:L14:ans=50
+Result: 50
+TRACE:L16:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L6:c=13
+TRACE:L7:d=14
+TRACE:L8:a=11
+TRACE:L9:b=12
+TRACE:L11:Returning=51
+TRACE:L16:ans=51
+Result: 51
+TRACE:L18:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 2 unique trace difference(s):
+
+  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
+  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:9: error: redefinition of 'c'
+   12 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+swap_test_check.c:13:9: error: redefinition of 'd'
+   13 |     int d = x + 4;
+      |         ^
+swap_test_check.c:9:9: note: previous definition is here
+    9 |     int d = x + 4;
+      |         ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:9: error: redefinition of 'c'
+   13 |     int c = x + 3;
+      |         ^
+swap_test_check.c:8:9: note: previous definition is here
+    8 |     int c = x + 3;
+      |         ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found
+
+ RERUNNING ALGORITHM (diff 1, window=5)
+
+ Processing Swapped Reference File: reference_swapped_1.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L13:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L5:a=11
+TRACE:L6:b=12
+TRACE:L7:c=13
+TRACE:L8:d=14
+TRACE:L9:Returning=50
+TRACE:L14:ans=50
+Result: 50
+TRACE:L16:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_1.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L6:c=13
+TRACE:L7:d=14
+TRACE:L8:a=11
+TRACE:L9:b=12
+TRACE:L11:Returning=51
+TRACE:L16:ans=51
+Result: 51
+TRACE:L18:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 2 unique trace difference(s):
+
+  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
+  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+Diff 1 in function 'math_stuff' at line 11 could not be fully resolved with any window size.
+
+--- Diff 2: function 'main', line 16, var 'ans' ---
+
+Finding diffs around line 16...
+No diff block found within ±0 lines of line 16.
+
+Finding diffs around line 16...
+No diff block found within ±1 lines of line 16.
+
+Finding diffs around line 16...
+No diff block found within ±2 lines of line 16.
+
+Finding diffs around line 16...
+No diff block found within ±3 lines of line 16.
+
+Finding diffs around line 16...
+-> Best match Diff type: 'replace', distance: 4 lines
+-> Trying swap of 2 line(s) (buggy 15-11, ref 7-8)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:16:11: error: expected ';' after top level declarator
+   16 | int main()
+      |           ^
+      |           ;
+swap_test_check.c:17:13: error: use of undeclared identifier 'x'
+   17 |     int c = x + 3;
+      |             ^
+swap_test_check.c:18:13: error: use of undeclared identifier 'x'
+   18 |     int d = x + 4;
+      |             ^
+swap_test_check.c:19:1: error: extraneous closing brace ('}')
+   19 | }
+      | ^
+4 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 16-11, ref 7-7)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:18:13: error: use of undeclared identifier 'x'
+   18 |     int c = x + 3;
+      |             ^
+swap_test_check.c:21:5: error: redefinition of 'main'
+   21 | int main()
+      |     ^
+swap_test_check.c:16:5: note: previous definition is here
+   16 | int main()
+      |     ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found
+
+ RERUNNING ALGORITHM (diff 2, window=4)
+
+ Processing Swapped Reference File: reference_swapped_2.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L13:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L5:a=11
+TRACE:L6:b=12
+TRACE:L7:c=13
+TRACE:L8:d=14
+TRACE:L9:Returning=50
+TRACE:L14:ans=50
+Result: 50
+TRACE:L16:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_2.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L6:c=13
+TRACE:L7:d=14
+TRACE:L8:a=11
+TRACE:L9:b=12
+TRACE:L11:Returning=51
+TRACE:L16:ans=51
+Result: 51
+TRACE:L18:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 2 unique trace difference(s):
+
+  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
+  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+
+Finding diffs around line 16...
+-> Best match Diff type: 'replace', distance: 4 lines
+-> Trying swap of 2 line(s) (buggy 15-11, ref 7-8)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:16:11: error: expected ';' after top level declarator
+   16 | int main()
+      |           ^
+      |           ;
+swap_test_check.c:17:13: error: use of undeclared identifier 'x'
+   17 |     int c = x + 3;
+      |             ^
+swap_test_check.c:18:13: error: use of undeclared identifier 'x'
+   18 |     int d = x + 4;
+      |             ^
+swap_test_check.c:19:1: error: extraneous closing brace ('}')
+   19 | }
+      | ^
+4 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 16-11, ref 7-7)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:18:13: error: use of undeclared identifier 'x'
+   18 |     int c = x + 3;
+      |             ^
+swap_test_check.c:21:5: error: redefinition of 'main'
+   21 | int main()
+      |     ^
+swap_test_check.c:16:5: note: previous definition is here
+   16 | int main()
+      |     ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found
+
+ RERUNNING ALGORITHM (diff 2, window=5)
+
+ Processing Swapped Reference File: reference_swapped_2.c
+Compiling ref_swapped.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L13:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L5:a=11
+TRACE:L6:b=12
+TRACE:L7:c=13
+TRACE:L8:d=14
+TRACE:L9:Returning=50
+TRACE:L14:ans=50
+Result: 50
+TRACE:L16:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_2.c
+Compiling test_swapped.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering math_stuff
+TRACE:L4:x=10
+TRACE:L6:c=13
+TRACE:L7:d=14
+TRACE:L8:a=11
+TRACE:L9:b=12
+TRACE:L11:Returning=51
+TRACE:L16:ans=51
+Result: 51
+TRACE:L18:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 2 unique trace difference(s):
+
+  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
+  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+Diff 2 in function 'main' at line 16 could not be fully resolved with any window size.
+
+Best partial result: swapping line 11 with window=0 reduced differences to 2.
 
 Cleaning up .c and .traced.c files...

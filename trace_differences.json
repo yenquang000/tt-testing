@@ -1,32 +1,22 @@
 [
   {
-    "trace_index": 5,
-    "function": "compute_magic_number",
-    "ref_line": 4,
-    "bug_line": 4,
-    "ref_var": "diff",
-    "bug_var": "diff",
-    "ref_val": "6",
-    "bug_val": "14"
-  },
-  {
-    "trace_index": 6,
-    "function": "compute_magic_number",
-    "ref_line": 5,
-    "bug_line": 5,
-    "ref_var": "result",
-    "bug_var": "result",
-    "ref_val": "84",
-    "bug_val": "196"
-  },
-  {
-    "trace_index": 8,
-    "function": "main",
-    "ref_line": 11,
+    "trace_index": 9,
+    "function": "math_stuff",
+    "ref_line": 9,
     "bug_line": 11,
+    "ref_var": "Returning",
+    "bug_var": "Returning",
+    "ref_val": "50",
+    "bug_val": "51"
+  },
+  {
+    "trace_index": 10,
+    "function": "main",
+    "ref_line": 14,
+    "bug_line": 16,
     "ref_var": "ans",
     "bug_var": "ans",
-    "ref_val": "84",
-    "bug_val": "196"
+    "ref_val": "50",
+    "bug_val": "51"
   }
 ]
