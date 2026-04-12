@@ -1,121 +1,272 @@
 Found libclang at: /Library/Developer/CommandLineTools/usr/lib/libclang.dylib
 
 Extracting variable roles for normalization...
-Variable names already match between files.
- Processing Reference File: reference_to_trace.c 
+
+Processing Reference File: reference_to_trace.c
 Compiling ref.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L13:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L5:a=11
-TRACE:L6:b=12
-TRACE:L7:c=13
-TRACE:L8:d=14
-TRACE:L9:Returning=50
-TRACE:L14:ans=50
-Result: 50
-TRACE:L16:Returning=0
-
-
-Processing Buggy File: sample_to_trace.c
-Compiling test.traced.c using gcc...
-
-Captured Buggy Output (up to crash):
 TRACE:L15:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L6:c=13
-TRACE:L7:d=14
-TRACE:L8:a=11
-TRACE:L9:b=12
-TRACE:L11:Returning=51
-TRACE:L16:ans=51
-Result: 51
-TRACE:L18:Returning=0
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
 
+DEBUG ref_pipeline_ok=True, ref_log length=13
+
+Found 6 student file(s): ['stu.c', 'stu2.c', 'stu3.c', 'stu4.c', 'stu5.c', 'stu6.c']
+
+STUDENT FILE: stu.c
+Compiling test_stu.c.traced.c using gcc...
+
+Captured Output for stu.c:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+DEBUG [stu.c]: buggy_pipeline_ok=True, buggy_log length=13
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+No differences found in trace logs. The logic appears identical.
+DEBUG [stu.c]: found_diff=False, diffs count=0
+
+STUDENT FILE: stu2.c
+Compiling test_stu2.c.traced.c using gcc...
+
+Captured Output for stu2.c:
+TRACE:L16:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L11:avg=37.500000
+TRACE:L12:Returning=37.500000
+TRACE:L18:result=37.500000
+Average: 37.50
+TRACE:L20:Returning=0
+
+DEBUG [stu2.c]: buggy_pipeline_ok=True, buggy_log length=13
 
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
 Found 2 unique trace difference(s):
 
-  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
-  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+  [1] Function: calculate_average, Line: 11, Var: avg, Ref=30.000000, Bug=37.500000
+  [2] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=37.500000
+DEBUG [stu2.c]: found_diff=True, diffs count=2
+Variable name mapping for stu3.c: {'calculate_average:total': 'i'}
 
-Attempting individual swaps for 2 differences
+STUDENT FILE: stu3.c
+Compiling test_stu3.c.traced.c using gcc...
 
---- Diff 1: function 'math_stuff', line 11, var 'Returning' ---
+Captured Output for stu3.c:
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+DEBUG [stu3.c]: buggy_pipeline_ok=True, buggy_log length=15
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+DEBUG [stu3.c]: found_diff=True, diffs count=6
+Variable name mapping for stu4.c: {'calculate_average:sum': 'total', 'calculate_average:mean': 'avg', 'main:final': 'result'}
+
+STUDENT FILE: stu4.c
+Compiling test_stu4.c.traced.c using gcc...
+
+Captured Output for stu4.c:
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+DEBUG [stu4.c]: buggy_pipeline_ok=True, buggy_log length=14
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+DEBUG [stu4.c]: found_diff=True, diffs count=3
+
+STUDENT FILE: stu5.c
+Compiling test_stu5.c.traced.c using gcc...
+
+Captured Output for stu5.c:
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L11:total=201
+TRACE:L12:avg=40.200001
+TRACE:L13:Returning=40.200001
+TRACE:L20:result=40.200001
+Average: 40.20
+TRACE:L22:Returning=0
+
+DEBUG [stu5.c]: buggy_pipeline_ok=True, buggy_log length=14
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 4 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=None, Bug=200
+  [2] Function: calculate_average, Line: 11, Var: total, Ref=150, Bug=201
+  [3] Function: calculate_average, Line: 12, Var: avg, Ref=30.000000, Bug=40.200001
+  [4] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=40.200001
+DEBUG [stu5.c]: found_diff=True, diffs count=4
+
+STUDENT FILE: stu6.c
+Compiling test_stu6.c.traced.c using gcc...
+Execution failed for test_stu6.c_app:
+Assertion failed: (total == 999), function calculate_average, file test_stu6.c.traced.c, line 17.
+
+
+Captured Output for stu6.c:
+TRACE:L18:Entering main
+TRACE:L5:Entering calculate_average
+TRACE:L5:size=5
+TRACE:L6:total=0
+TRACE:L9:total=10
+TRACE:L9:total=30
+TRACE:L9:total=60
+TRACE:L9:total=100
+TRACE:L9:total=150
+
+DEBUG [stu6.c]: buggy_pipeline_ok=True, buggy_log length=9
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 2 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 10, Var: (Missing), Ref=30.000000, Bug=None
+  [2] Function: calculate_average, Line: 19, Var: (Missing), Ref=0, Bug=None
+DEBUG [stu6.c]: found_diff=True, diffs count=2
+
+DEBUG all_results summary: {'stu.c': 0, 'stu2.c': 2, 'stu3.c': 6, 'stu4.c': 3, 'stu5.c': 4, 'stu6.c': 2}
+
+stu.c: No differences found.
+SWAP PHASE: stu2.c
+Attempting individual swaps for 2 difference(s)
+
+--- Diff 1 [stu2.c]: function 'calculate_average', line 11, var 'avg' ---
 
 Finding diffs around line 11...
 -> Best match Diff type: 'replace', distance: 0 lines
--> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-10)...
 Compiling swap_test_check.c using gcc...
-Compilation failed for swap_test_check.c:
-swap_test_check.c:12:9: error: redefinition of 'c'
-   12 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-swap_test_check.c:13:9: error: redefinition of 'd'
-   13 |     int d = x + 4;
-      |         ^
-swap_test_check.c:9:9: note: previous definition is here
-    9 |     int d = x + 4;
-      |         ^
-2 errors generated.
+-> Swap of 2 line(s) compiled successfully!
 
-Error: Incorrect Recall, incorrect syntax
--> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
-Compiling swap_test_check.c using gcc...
-Compilation failed for swap_test_check.c:
-swap_test_check.c:13:9: error: redefinition of 'c'
-   13 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-1 error generated.
+RERANNING ALGORITHM [stu2.c] (diff 1, window=0)
 
-Error: Incorrect Recall, incorrect syntax
--> No valid swap found
-
- RERUNNING ALGORITHM (diff 1, window=0)
-
- Processing Swapped Reference File: reference_swapped_1.c
-Compiling ref_swapped.traced.c using gcc...
+Processing Swapped Reference File: reference_swapped_stu2.c_1.c
+Compiling ref_swapped_stu2.c.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L13:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L5:a=11
-TRACE:L6:b=12
-TRACE:L7:c=13
-TRACE:L8:d=14
-TRACE:L9:Returning=50
-TRACE:L14:ans=50
-Result: 50
-TRACE:L16:Returning=0
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
 
 
-Processing Swapped Buggy File: sample_swapped_1.c
-Compiling test_swapped.traced.c using gcc...
+Processing Swapped Buggy File: sample_swapped_stu2.c_1.c
+Compiling test_swapped_stu2.c.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
 TRACE:L15:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L6:c=13
-TRACE:L7:d=14
-TRACE:L8:a=11
-TRACE:L9:b=12
-TRACE:L11:Returning=51
-TRACE:L16:ans=51
-Result: 51
-TRACE:L18:Returning=0
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
 
 
 TRACE COMPARISON AFTER SWAP
@@ -123,79 +274,83 @@ TRACE COMPARISON AFTER SWAP
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-Found 2 unique trace difference(s):
+No differences found in trace logs. The logic appears identical.
+Resolved [stu2.c] with window=0. Error in function 'calculate_average' at line: 11
+SWAP PHASE: stu3.c
+Attempting individual swaps for 6 difference(s)
 
-  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
-  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+--- Diff 1 [stu3.c]: function 'calculate_average', line 6, var 'avg' ---
 
-Finding diffs around line 11...
--> Best match Diff type: 'replace', distance: 0 lines
--> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+Finding diffs around line 6...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 5-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:12:9: error: redefinition of 'c'
-   12 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-swap_test_check.c:13:9: error: redefinition of 'd'
-   13 |     int d = x + 4;
-      |         ^
-swap_test_check.c:9:9: note: previous definition is here
-    9 |     int d = x + 4;
-      |         ^
+swap_test_check.c:13:5: error: use of undeclared identifier 'avg'
+   13 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'avg'
+   14 |     return avg;
+      |            ^
 2 errors generated.
 
 Error: Incorrect Recall, incorrect syntax
--> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+-> Trying swap of 1 line(s) (buggy 6-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:13:9: error: redefinition of 'c'
-   13 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-1 error generated.
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
 
 Error: Incorrect Recall, incorrect syntax
--> No valid swap found
+-> No valid swap found, keeping original buggy code.
 
- RERUNNING ALGORITHM (diff 1, window=1)
+RERANNING ALGORITHM [stu3.c] (diff 1, window=0)
 
- Processing Swapped Reference File: reference_swapped_1.c
-Compiling ref_swapped.traced.c using gcc...
+Processing Swapped Reference File: reference_swapped_stu3.c_1.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L13:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L5:a=11
-TRACE:L6:b=12
-TRACE:L7:c=13
-TRACE:L8:d=14
-TRACE:L9:Returning=50
-TRACE:L14:ans=50
-Result: 50
-TRACE:L16:Returning=0
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
 
 
-Processing Swapped Buggy File: sample_swapped_1.c
-Compiling test_swapped.traced.c using gcc...
+Processing Swapped Buggy File: sample_swapped_stu3.c_1.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L15:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L6:c=13
-TRACE:L7:d=14
-TRACE:L8:a=11
-TRACE:L9:b=12
-TRACE:L11:Returning=51
-TRACE:L16:ans=51
-Result: 51
-TRACE:L18:Returning=0
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
 
 
 TRACE COMPARISON AFTER SWAP
@@ -203,79 +358,85 @@ TRACE COMPARISON AFTER SWAP
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-Found 2 unique trace difference(s):
+Found 6 unique trace difference(s):
 
-  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
-  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
 
-Finding diffs around line 11...
--> Best match Diff type: 'replace', distance: 0 lines
--> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+Finding diffs around line 6...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 5-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:12:9: error: redefinition of 'c'
-   12 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-swap_test_check.c:13:9: error: redefinition of 'd'
-   13 |     int d = x + 4;
-      |         ^
-swap_test_check.c:9:9: note: previous definition is here
-    9 |     int d = x + 4;
-      |         ^
+swap_test_check.c:13:5: error: use of undeclared identifier 'avg'
+   13 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'avg'
+   14 |     return avg;
+      |            ^
 2 errors generated.
 
 Error: Incorrect Recall, incorrect syntax
--> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+-> Trying swap of 1 line(s) (buggy 6-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:13:9: error: redefinition of 'c'
-   13 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-1 error generated.
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
 
 Error: Incorrect Recall, incorrect syntax
--> No valid swap found
+-> No valid swap found, keeping original buggy code.
 
- RERUNNING ALGORITHM (diff 1, window=2)
+RERANNING ALGORITHM [stu3.c] (diff 1, window=1)
 
- Processing Swapped Reference File: reference_swapped_1.c
-Compiling ref_swapped.traced.c using gcc...
+Processing Swapped Reference File: reference_swapped_stu3.c_1.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L13:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L5:a=11
-TRACE:L6:b=12
-TRACE:L7:c=13
-TRACE:L8:d=14
-TRACE:L9:Returning=50
-TRACE:L14:ans=50
-Result: 50
-TRACE:L16:Returning=0
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
 
 
-Processing Swapped Buggy File: sample_swapped_1.c
-Compiling test_swapped.traced.c using gcc...
+Processing Swapped Buggy File: sample_swapped_stu3.c_1.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L15:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L6:c=13
-TRACE:L7:d=14
-TRACE:L8:a=11
-TRACE:L9:b=12
-TRACE:L11:Returning=51
-TRACE:L16:ans=51
-Result: 51
-TRACE:L18:Returning=0
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
 
 
 TRACE COMPARISON AFTER SWAP
@@ -283,79 +444,85 @@ TRACE COMPARISON AFTER SWAP
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-Found 2 unique trace difference(s):
+Found 6 unique trace difference(s):
 
-  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
-  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
 
-Finding diffs around line 11...
--> Best match Diff type: 'replace', distance: 0 lines
--> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+Finding diffs around line 6...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 5-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:12:9: error: redefinition of 'c'
-   12 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-swap_test_check.c:13:9: error: redefinition of 'd'
-   13 |     int d = x + 4;
-      |         ^
-swap_test_check.c:9:9: note: previous definition is here
-    9 |     int d = x + 4;
-      |         ^
+swap_test_check.c:13:5: error: use of undeclared identifier 'avg'
+   13 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'avg'
+   14 |     return avg;
+      |            ^
 2 errors generated.
 
 Error: Incorrect Recall, incorrect syntax
--> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+-> Trying swap of 1 line(s) (buggy 6-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:13:9: error: redefinition of 'c'
-   13 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-1 error generated.
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
 
 Error: Incorrect Recall, incorrect syntax
--> No valid swap found
+-> No valid swap found, keeping original buggy code.
 
- RERUNNING ALGORITHM (diff 1, window=3)
+RERANNING ALGORITHM [stu3.c] (diff 1, window=2)
 
- Processing Swapped Reference File: reference_swapped_1.c
-Compiling ref_swapped.traced.c using gcc...
+Processing Swapped Reference File: reference_swapped_stu3.c_1.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L13:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L5:a=11
-TRACE:L6:b=12
-TRACE:L7:c=13
-TRACE:L8:d=14
-TRACE:L9:Returning=50
-TRACE:L14:ans=50
-Result: 50
-TRACE:L16:Returning=0
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
 
 
-Processing Swapped Buggy File: sample_swapped_1.c
-Compiling test_swapped.traced.c using gcc...
+Processing Swapped Buggy File: sample_swapped_stu3.c_1.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L15:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L6:c=13
-TRACE:L7:d=14
-TRACE:L8:a=11
-TRACE:L9:b=12
-TRACE:L11:Returning=51
-TRACE:L16:ans=51
-Result: 51
-TRACE:L18:Returning=0
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
 
 
 TRACE COMPARISON AFTER SWAP
@@ -363,79 +530,85 @@ TRACE COMPARISON AFTER SWAP
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-Found 2 unique trace difference(s):
+Found 6 unique trace difference(s):
 
-  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
-  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
 
-Finding diffs around line 11...
--> Best match Diff type: 'replace', distance: 0 lines
--> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+Finding diffs around line 6...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 5-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:12:9: error: redefinition of 'c'
-   12 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-swap_test_check.c:13:9: error: redefinition of 'd'
-   13 |     int d = x + 4;
-      |         ^
-swap_test_check.c:9:9: note: previous definition is here
-    9 |     int d = x + 4;
-      |         ^
+swap_test_check.c:13:5: error: use of undeclared identifier 'avg'
+   13 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'avg'
+   14 |     return avg;
+      |            ^
 2 errors generated.
 
 Error: Incorrect Recall, incorrect syntax
--> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+-> Trying swap of 1 line(s) (buggy 6-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:13:9: error: redefinition of 'c'
-   13 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-1 error generated.
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
 
 Error: Incorrect Recall, incorrect syntax
--> No valid swap found
+-> No valid swap found, keeping original buggy code.
 
- RERUNNING ALGORITHM (diff 1, window=4)
+RERANNING ALGORITHM [stu3.c] (diff 1, window=3)
 
- Processing Swapped Reference File: reference_swapped_1.c
-Compiling ref_swapped.traced.c using gcc...
+Processing Swapped Reference File: reference_swapped_stu3.c_1.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L13:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L5:a=11
-TRACE:L6:b=12
-TRACE:L7:c=13
-TRACE:L8:d=14
-TRACE:L9:Returning=50
-TRACE:L14:ans=50
-Result: 50
-TRACE:L16:Returning=0
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
 
 
-Processing Swapped Buggy File: sample_swapped_1.c
-Compiling test_swapped.traced.c using gcc...
+Processing Swapped Buggy File: sample_swapped_stu3.c_1.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L15:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L6:c=13
-TRACE:L7:d=14
-TRACE:L8:a=11
-TRACE:L9:b=12
-TRACE:L11:Returning=51
-TRACE:L16:ans=51
-Result: 51
-TRACE:L18:Returning=0
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
 
 
 TRACE COMPARISON AFTER SWAP
@@ -443,79 +616,85 @@ TRACE COMPARISON AFTER SWAP
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-Found 2 unique trace difference(s):
+Found 6 unique trace difference(s):
 
-  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
-  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
 
-Finding diffs around line 11...
--> Best match Diff type: 'replace', distance: 0 lines
--> Trying swap of 2 line(s) (buggy 10-11, ref 7-8)...
+Finding diffs around line 6...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 5-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:12:9: error: redefinition of 'c'
-   12 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-swap_test_check.c:13:9: error: redefinition of 'd'
-   13 |     int d = x + 4;
-      |         ^
-swap_test_check.c:9:9: note: previous definition is here
-    9 |     int d = x + 4;
-      |         ^
+swap_test_check.c:13:5: error: use of undeclared identifier 'avg'
+   13 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'avg'
+   14 |     return avg;
+      |            ^
 2 errors generated.
 
 Error: Incorrect Recall, incorrect syntax
--> Trying swap of 1 line(s) (buggy 11-11, ref 7-7)...
+-> Trying swap of 1 line(s) (buggy 6-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:13:9: error: redefinition of 'c'
-   13 |     int c = x + 3;
-      |         ^
-swap_test_check.c:8:9: note: previous definition is here
-    8 |     int c = x + 3;
-      |         ^
-1 error generated.
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
 
 Error: Incorrect Recall, incorrect syntax
--> No valid swap found
+-> No valid swap found, keeping original buggy code.
 
- RERUNNING ALGORITHM (diff 1, window=5)
+RERANNING ALGORITHM [stu3.c] (diff 1, window=4)
 
- Processing Swapped Reference File: reference_swapped_1.c
-Compiling ref_swapped.traced.c using gcc...
+Processing Swapped Reference File: reference_swapped_stu3.c_1.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L13:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L5:a=11
-TRACE:L6:b=12
-TRACE:L7:c=13
-TRACE:L8:d=14
-TRACE:L9:Returning=50
-TRACE:L14:ans=50
-Result: 50
-TRACE:L16:Returning=0
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
 
 
-Processing Swapped Buggy File: sample_swapped_1.c
-Compiling test_swapped.traced.c using gcc...
+Processing Swapped Buggy File: sample_swapped_stu3.c_1.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L15:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L6:c=13
-TRACE:L7:d=14
-TRACE:L8:a=11
-TRACE:L9:b=12
-TRACE:L11:Returning=51
-TRACE:L16:ans=51
-Result: 51
-TRACE:L18:Returning=0
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
 
 
 TRACE COMPARISON AFTER SWAP
@@ -523,182 +702,637 @@ TRACE COMPARISON AFTER SWAP
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-Found 2 unique trace difference(s):
+Found 6 unique trace difference(s):
 
-  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
-  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
-Diff 1 in function 'math_stuff' at line 11 could not be fully resolved with any window size.
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
 
---- Diff 2: function 'main', line 16, var 'ans' ---
-
-Finding diffs around line 16...
-No diff block found within ±0 lines of line 16.
-
-Finding diffs around line 16...
-No diff block found within ±1 lines of line 16.
-
-Finding diffs around line 16...
-No diff block found within ±2 lines of line 16.
-
-Finding diffs around line 16...
-No diff block found within ±3 lines of line 16.
-
-Finding diffs around line 16...
--> Best match Diff type: 'replace', distance: 4 lines
--> Trying swap of 2 line(s) (buggy 15-11, ref 7-8)...
+Finding diffs around line 6...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 5-6, ref 5-4)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:16:11: error: expected ';' after top level declarator
-   16 | int main()
+swap_test_check.c:13:5: error: use of undeclared identifier 'avg'
+   13 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'avg'
+   14 |     return avg;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 6-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 1, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_1.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_1.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+--- Diff 2 [stu3.c]: function 'calculate_average', line 7, var 'total' ---
+
+Finding diffs around line 7...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 6-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 7-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 1 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu3.c] (diff 2, window=0)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_2.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_2.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 7...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 6-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 7-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 1 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu3.c] (diff 2, window=1)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_2.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_2.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 7...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 6-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 7-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 1 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu3.c] (diff 2, window=2)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_2.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_2.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 7...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 6-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 7-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 1 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu3.c] (diff 2, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_2.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_2.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 7...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 6-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 7-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 1 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu3.c] (diff 2, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_2.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_2.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 7...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 6-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:5: error: use of undeclared identifier 'avg'
+   14 |     avg = (float)total / size;
+      |     ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'avg'
+   15 |     return avg;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 7-6, ref 5-4)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 1 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu3.c] (diff 2, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_2.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_2.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+--- Diff 3 [stu3.c]: function 'calculate_average', line 10, var 'total' ---
+
+Finding diffs around line 10...
+No diff block found within ±0 lines of line 10.
+
+Finding diffs around line 10...
+No diff block found within ±1 lines of line 10.
+
+Finding diffs around line 10...
+-> Best match Diff type: 'replace', distance: 2 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
       |           ^
-      |           ;
-swap_test_check.c:17:13: error: use of undeclared identifier 'x'
-   17 |     int c = x + 3;
-      |             ^
-swap_test_check.c:18:13: error: use of undeclared identifier 'x'
-   18 |     int d = x + 4;
-      |             ^
-swap_test_check.c:19:1: error: extraneous closing brace ('}')
-   19 | }
-      | ^
-4 errors generated.
-
-Error: Incorrect Recall, incorrect syntax
--> Trying swap of 1 line(s) (buggy 16-11, ref 7-7)...
-Compiling swap_test_check.c using gcc...
-Compilation failed for swap_test_check.c:
-swap_test_check.c:18:13: error: use of undeclared identifier 'x'
-   18 |     int c = x + 3;
-      |             ^
-swap_test_check.c:21:5: error: redefinition of 'main'
-   21 | int main()
-      |     ^
-swap_test_check.c:16:5: note: previous definition is here
-   16 | int main()
-      |     ^
-2 errors generated.
-
-Error: Incorrect Recall, incorrect syntax
--> No valid swap found
-
- RERUNNING ALGORITHM (diff 2, window=4)
-
- Processing Swapped Reference File: reference_swapped_2.c
-Compiling ref_swapped.traced.c using gcc...
-
-Captured Reference Output:
-TRACE:L13:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L5:a=11
-TRACE:L6:b=12
-TRACE:L7:c=13
-TRACE:L8:d=14
-TRACE:L9:Returning=50
-TRACE:L14:ans=50
-Result: 50
-TRACE:L16:Returning=0
-
-
-Processing Swapped Buggy File: sample_swapped_2.c
-Compiling test_swapped.traced.c using gcc...
-
-Captured Buggy Output (up to crash):
-TRACE:L15:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L6:c=13
-TRACE:L7:d=14
-TRACE:L8:a=11
-TRACE:L9:b=12
-TRACE:L11:Returning=51
-TRACE:L16:ans=51
-Result: 51
-TRACE:L18:Returning=0
-
-
-TRACE COMPARISON AFTER SWAP
-
- TRACE COMPARISON
-Comparing logs to find the first point of divergence...
-
-Found 2 unique trace difference(s):
-
-  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
-  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
-
-Finding diffs around line 16...
--> Best match Diff type: 'replace', distance: 4 lines
--> Trying swap of 2 line(s) (buggy 15-11, ref 7-8)...
-Compiling swap_test_check.c using gcc...
-Compilation failed for swap_test_check.c:
-swap_test_check.c:16:11: error: expected ';' after top level declarator
-   16 | int main()
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
       |           ^
-      |           ;
-swap_test_check.c:17:13: error: use of undeclared identifier 'x'
-   17 |     int c = x + 3;
-      |             ^
-swap_test_check.c:18:13: error: use of undeclared identifier 'x'
-   18 |     int d = x + 4;
-      |             ^
-swap_test_check.c:19:1: error: extraneous closing brace ('}')
-   19 | }
-      | ^
-4 errors generated.
+1 error generated.
 
 Error: Incorrect Recall, incorrect syntax
--> Trying swap of 1 line(s) (buggy 16-11, ref 7-7)...
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
 Compiling swap_test_check.c using gcc...
 Compilation failed for swap_test_check.c:
-swap_test_check.c:18:13: error: use of undeclared identifier 'x'
-   18 |     int c = x + 3;
-      |             ^
-swap_test_check.c:21:5: error: redefinition of 'main'
-   21 | int main()
-      |     ^
-swap_test_check.c:16:5: note: previous definition is here
-   16 | int main()
-      |     ^
-2 errors generated.
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
 
 Error: Incorrect Recall, incorrect syntax
--> No valid swap found
+-> No valid swap found, keeping original buggy code.
 
- RERUNNING ALGORITHM (diff 2, window=5)
+RERANNING ALGORITHM [stu3.c] (diff 3, window=2)
 
- Processing Swapped Reference File: reference_swapped_2.c
-Compiling ref_swapped.traced.c using gcc...
+Processing Swapped Reference File: reference_swapped_stu3.c_3.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
 
 Captured Reference Output:
-TRACE:L13:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L5:a=11
-TRACE:L6:b=12
-TRACE:L7:c=13
-TRACE:L8:d=14
-TRACE:L9:Returning=50
-TRACE:L14:ans=50
-Result: 50
-TRACE:L16:Returning=0
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
 
 
-Processing Swapped Buggy File: sample_swapped_2.c
-Compiling test_swapped.traced.c using gcc...
+Processing Swapped Buggy File: sample_swapped_stu3.c_3.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
 
 Captured Buggy Output (up to crash):
-TRACE:L15:Entering main
-TRACE:L4:Entering math_stuff
-TRACE:L4:x=10
-TRACE:L6:c=13
-TRACE:L7:d=14
-TRACE:L8:a=11
-TRACE:L9:b=12
-TRACE:L11:Returning=51
-TRACE:L16:ans=51
-Result: 51
-TRACE:L18:Returning=0
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
 
 
 TRACE COMPARISON AFTER SWAP
@@ -706,12 +1340,4286 @@ TRACE COMPARISON AFTER SWAP
  TRACE COMPARISON
 Comparing logs to find the first point of divergence...
 
-Found 2 unique trace difference(s):
+Found 6 unique trace difference(s):
 
-  [1] Function: math_stuff, Line: 11, Var: Returning, Ref=50, Bug=51
-  [2] Function: main, Line: 16, Var: ans, Ref=50, Bug=51
-Diff 2 in function 'main' at line 16 could not be fully resolved with any window size.
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
 
-Best partial result: swapping line 11 with window=0 reduced differences to 2.
+Finding diffs around line 10...
+-> Best match Diff type: 'replace', distance: 2 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 3, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_3.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_3.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 10...
+-> Best match Diff type: 'replace', distance: 2 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 3, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_3.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_3.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 10...
+-> Best match Diff type: 'replace', distance: 2 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 3, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_3.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_3.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+--- Diff 4 [stu3.c]: function 'calculate_average', line 12, var 'total' ---
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 4, window=0)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_4.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_4.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 4, window=1)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_4.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_4.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 4, window=2)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_4.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_4.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 4, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_4.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_4.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 4, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_4.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_4.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 4, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_4.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_4.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+--- Diff 5 [stu3.c]: function 'calculate_average', line 13, var 'avg' ---
+
+Finding diffs around line 13...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 13-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:15:11: error: redefinition of 'avg'
+   15 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 5, window=0)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_5.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_5.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 13...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 13-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:15:11: error: redefinition of 'avg'
+   15 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 5, window=1)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_5.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_5.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 13...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 13-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:15:11: error: redefinition of 'avg'
+   15 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 5, window=2)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_5.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_5.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 13...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 13-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:15:11: error: redefinition of 'avg'
+   15 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 5, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_5.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_5.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 13...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 13-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:15:11: error: redefinition of 'avg'
+   15 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 5, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_5.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_5.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+Finding diffs around line 13...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 12-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:11: error: redefinition of 'avg'
+   14 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 13-13, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:15:11: error: redefinition of 'avg'
+   15 |     float avg = (float)total / size;
+      |           ^
+swap_test_check.c:8:11: note: previous definition is here
+    8 |     float avg = 0;
+      |           ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu3.c] (diff 5, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu3.c_5.c
+Compiling ref_swapped_stu3.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu3.c_5.c
+Compiling test_swapped_stu3.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L18:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L6:avg=0.000000
+TRACE:L7:total=0
+TRACE:L10:total=10
+TRACE:L10:total=30
+TRACE:L10:total=60
+TRACE:L10:total=100
+TRACE:L10:total=150
+TRACE:L12:total=160
+TRACE:L13:avg=32.000000
+TRACE:L14:Returning=32.000000
+TRACE:L20:result=32.000000
+Average: 32.00
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 6 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 6, Var: avg, Ref=None, Bug=0.000000
+  [2] Function: calculate_average, Line: 7, Var: total, Ref=0, Bug=0
+  [3] Function: calculate_average, Line: 10, Var: total, Ref=10, Bug=10
+  [4] Function: calculate_average, Line: 12, Var: total, Ref=None, Bug=160
+  [5] Function: calculate_average, Line: 13, Var: avg, Ref=30.000000, Bug=32.000000
+  [6] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=32.000000
+
+--- Diff 6 [stu3.c]: function 'main', line 20, var 'result' ---
+
+Finding diffs around line 20...
+No diff block found within ±0 lines of line 20.
+
+Finding diffs around line 20...
+No diff block found within ±1 lines of line 20.
+
+Finding diffs around line 20...
+No diff block found within ±2 lines of line 20.
+
+Finding diffs around line 20...
+No diff block found within ±3 lines of line 20.
+
+Finding diffs around line 20...
+No diff block found within ±4 lines of line 20.
+
+Finding diffs around line 20...
+No diff block found within ±5 lines of line 20.
+
+[stu3.c] Best partial result: line 6, window=0, remaining diffs=6.
+SWAP PHASE: stu4.c
+Attempting individual swaps for 3 difference(s)
+
+--- Diff 1 [stu4.c]: function 'calculate_average', line 11, var 'sum' ---
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 10-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'mean'
+   14 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 1, window=0)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_1.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_1.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 10-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'mean'
+   14 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 1, window=1)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_1.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_1.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 10-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'mean'
+   14 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 1, window=2)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_1.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_1.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 10-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'mean'
+   14 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 1, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_1.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_1.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 10-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'mean'
+   14 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 1, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_1.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_1.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 11...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 10-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:14:12: error: use of undeclared identifier 'mean'
+   14 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 11-11, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 1, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_1.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_1.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+--- Diff 2 [stu4.c]: function 'calculate_average', line 12, var 'mean' ---
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 11-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 11-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:24: error: use of undeclared identifier 'total'
+   14 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 2, window=0)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_2.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_2.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 11-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 11-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:24: error: use of undeclared identifier 'total'
+   14 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 2, window=1)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_2.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_2.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 11-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 11-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:24: error: use of undeclared identifier 'total'
+   14 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 2, window=2)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_2.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_2.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 11-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 11-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:24: error: use of undeclared identifier 'total'
+   14 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 2, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_2.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_2.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 11-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 11-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:24: error: use of undeclared identifier 'total'
+   14 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 2, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_2.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_2.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 4 line(s) (buggy 10-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:12:24: error: use of undeclared identifier 'total'
+   12 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 3 line(s) (buggy 11-13, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+1 error generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 2 line(s) (buggy 11-12, ref 10-11)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:13:24: error: use of undeclared identifier 'total'
+   13 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> Trying swap of 1 line(s) (buggy 12-12, ref 10-10)...
+Compiling swap_test_check.c using gcc...
+Compilation failed for swap_test_check.c:
+swap_test_check.c:14:24: error: use of undeclared identifier 'total'
+   14 |     float avg = (float)total / size;
+      |                        ^
+swap_test_check.c:15:12: error: use of undeclared identifier 'mean'
+   15 |     return mean;
+      |            ^
+2 errors generated.
+
+Error: Incorrect Recall, incorrect syntax
+-> No valid swap found, keeping original buggy code.
+
+RERANNING ALGORITHM [stu4.c] (diff 2, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_2.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_2.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:final=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: final, Ref=30.000000, Bug=31.000000
+
+--- Diff 3 [stu4.c]: function 'main', line 19, var 'final' ---
+
+Finding diffs around line 19...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-20, ref 17-18)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu4.c] (diff 3, window=0)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_3.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_3.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:result=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 19...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-20, ref 17-18)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu4.c] (diff 3, window=1)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_3.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_3.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:result=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 19...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-20, ref 17-18)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu4.c] (diff 3, window=2)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_3.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_3.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:result=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 19...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-20, ref 17-18)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu4.c] (diff 3, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_3.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_3.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:result=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 19...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-20, ref 17-18)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu4.c] (diff 3, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_3.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_3.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:result=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=31.000000
+
+Finding diffs around line 19...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-20, ref 17-18)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu4.c] (diff 3, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu4.c_3.c
+Compiling ref_swapped_stu4.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu4.c_3.c
+Compiling test_swapped_stu4.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:sum=0
+TRACE:L8:sum=10
+TRACE:L8:sum=30
+TRACE:L8:sum=60
+TRACE:L8:sum=100
+TRACE:L8:sum=150
+TRACE:L11:sum=155
+TRACE:L12:mean=31.000000
+TRACE:L13:Returning=31.000000
+TRACE:L19:result=31.000000
+Average: 31.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: sum, Ref=None, Bug=155
+  [2] Function: calculate_average, Line: 12, Var: mean, Ref=30.000000, Bug=31.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=31.000000
+
+[stu4.c] Best partial result: line 11, window=0, remaining diffs=3.
+SWAP PHASE: stu5.c
+Attempting individual swaps for 4 difference(s)
+
+--- Diff 1 [stu5.c]: function 'calculate_average', line 8, var 'total' ---
+
+Finding diffs around line 8...
+No diff block found within ±0 lines of line 8.
+
+Finding diffs around line 8...
+No diff block found within ±1 lines of line 8.
+
+Finding diffs around line 8...
+-> Best match Diff type: 'insert', distance: 2 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 1, window=2)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_1.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_1.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L10:avg=40.000000
+TRACE:L11:Returning=40.000000
+TRACE:L18:result=40.000000
+Average: 40.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 10, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 8...
+-> Best match Diff type: 'insert', distance: 2 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 1, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_1.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_1.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L10:avg=40.000000
+TRACE:L11:Returning=40.000000
+TRACE:L18:result=40.000000
+Average: 40.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 10, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 8...
+-> Best match Diff type: 'insert', distance: 2 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 1, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_1.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_1.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L10:avg=40.000000
+TRACE:L11:Returning=40.000000
+TRACE:L18:result=40.000000
+Average: 40.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 10, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 8...
+-> Best match Diff type: 'insert', distance: 2 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 1, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_1.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_1.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L10:avg=40.000000
+TRACE:L11:Returning=40.000000
+TRACE:L18:result=40.000000
+Average: 40.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 10, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=40.000000
+
+--- Diff 2 [stu5.c]: function 'calculate_average', line 11, var 'total' ---
+
+Finding diffs around line 11...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 2, window=0)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_2.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_2.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L10:avg=40.000000
+TRACE:L11:Returning=40.000000
+TRACE:L18:result=40.000000
+Average: 40.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 10, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 11...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 2, window=1)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_2.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_2.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L10:avg=40.000000
+TRACE:L11:Returning=40.000000
+TRACE:L18:result=40.000000
+Average: 40.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 10, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 11...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 2, window=2)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_2.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_2.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L10:avg=40.000000
+TRACE:L11:Returning=40.000000
+TRACE:L18:result=40.000000
+Average: 40.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 10, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 11...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 2, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_2.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_2.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L10:avg=40.000000
+TRACE:L11:Returning=40.000000
+TRACE:L18:result=40.000000
+Average: 40.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 10, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 11...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 2, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_2.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_2.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L10:avg=40.000000
+TRACE:L11:Returning=40.000000
+TRACE:L18:result=40.000000
+Average: 40.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 10, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 11...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 10-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 2, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_2.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_2.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L10:avg=40.000000
+TRACE:L11:Returning=40.000000
+TRACE:L18:result=40.000000
+Average: 40.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 10, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 18, Var: result, Ref=30.000000, Bug=40.000000
+
+--- Diff 3 [stu5.c]: function 'calculate_average', line 12, var 'avg' ---
+
+Finding diffs around line 12...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 11-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 3, window=0)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_3.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_3.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L16:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L11:avg=40.000000
+TRACE:L12:Returning=40.000000
+TRACE:L19:result=40.000000
+Average: 40.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 11, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 11-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 3, window=1)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_3.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_3.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L16:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L11:avg=40.000000
+TRACE:L12:Returning=40.000000
+TRACE:L19:result=40.000000
+Average: 40.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 11, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 11-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 3, window=2)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_3.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_3.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L16:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L11:avg=40.000000
+TRACE:L12:Returning=40.000000
+TRACE:L19:result=40.000000
+Average: 40.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 11, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 11-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 3, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_3.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_3.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L16:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L11:avg=40.000000
+TRACE:L12:Returning=40.000000
+TRACE:L19:result=40.000000
+Average: 40.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 11, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 11-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 3, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_3.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_3.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L16:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L11:avg=40.000000
+TRACE:L12:Returning=40.000000
+TRACE:L19:result=40.000000
+Average: 40.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 11, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=40.000000
+
+Finding diffs around line 12...
+-> Best match Diff type: 'insert', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 11-11, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 3, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_3.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_3.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L16:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=200
+TRACE:L11:avg=40.000000
+TRACE:L12:Returning=40.000000
+TRACE:L19:result=40.000000
+Average: 40.00
+TRACE:L21:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 8, Var: total, Ref=150, Bug=200
+  [2] Function: calculate_average, Line: 11, Var: avg, Ref=30.000000, Bug=40.000000
+  [3] Function: main, Line: 19, Var: result, Ref=30.000000, Bug=40.000000
+
+--- Diff 4 [stu5.c]: function 'main', line 20, var 'result' ---
+
+Finding diffs around line 20...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-19, ref 16-16)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 4, window=0)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_4.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_4.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L11:total=151
+TRACE:L12:avg=30.200001
+TRACE:L13:Returning=30.200001
+TRACE:L20:result=30.200001
+Average: 30.20
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: total, Ref=None, Bug=151
+  [2] Function: calculate_average, Line: 12, Var: avg, Ref=30.000000, Bug=30.200001
+  [3] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=30.200001
+
+Finding diffs around line 20...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-19, ref 16-16)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 4, window=1)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_4.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_4.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L11:total=151
+TRACE:L12:avg=30.200001
+TRACE:L13:Returning=30.200001
+TRACE:L20:result=30.200001
+Average: 30.20
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: total, Ref=None, Bug=151
+  [2] Function: calculate_average, Line: 12, Var: avg, Ref=30.000000, Bug=30.200001
+  [3] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=30.200001
+
+Finding diffs around line 20...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-19, ref 16-16)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 4, window=2)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_4.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_4.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L11:total=151
+TRACE:L12:avg=30.200001
+TRACE:L13:Returning=30.200001
+TRACE:L20:result=30.200001
+Average: 30.20
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: total, Ref=None, Bug=151
+  [2] Function: calculate_average, Line: 12, Var: avg, Ref=30.000000, Bug=30.200001
+  [3] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=30.200001
+
+Finding diffs around line 20...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-19, ref 16-16)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 4, window=3)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_4.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_4.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L11:total=151
+TRACE:L12:avg=30.200001
+TRACE:L13:Returning=30.200001
+TRACE:L20:result=30.200001
+Average: 30.20
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: total, Ref=None, Bug=151
+  [2] Function: calculate_average, Line: 12, Var: avg, Ref=30.000000, Bug=30.200001
+  [3] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=30.200001
+
+Finding diffs around line 20...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-19, ref 16-16)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 4, window=4)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_4.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_4.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L11:total=151
+TRACE:L12:avg=30.200001
+TRACE:L13:Returning=30.200001
+TRACE:L20:result=30.200001
+Average: 30.20
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: total, Ref=None, Bug=151
+  [2] Function: calculate_average, Line: 12, Var: avg, Ref=30.000000, Bug=30.200001
+  [3] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=30.200001
+
+Finding diffs around line 20...
+-> Best match Diff type: 'replace', distance: 0 lines
+-> Trying swap of 2 line(s) (buggy 19-19, ref 16-16)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu5.c] (diff 4, window=5)
+
+Processing Swapped Reference File: reference_swapped_stu5.c_4.c
+Compiling ref_swapped_stu5.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu5.c_4.c
+Compiling test_swapped_stu5.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L17:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L11:total=151
+TRACE:L12:avg=30.200001
+TRACE:L13:Returning=30.200001
+TRACE:L20:result=30.200001
+Average: 30.20
+TRACE:L22:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+Found 3 unique trace difference(s):
+
+  [1] Function: calculate_average, Line: 11, Var: total, Ref=None, Bug=151
+  [2] Function: calculate_average, Line: 12, Var: avg, Ref=30.000000, Bug=30.200001
+  [3] Function: main, Line: 20, Var: result, Ref=30.000000, Bug=30.200001
+
+[stu5.c] Best partial result: line 8, window=2, remaining diffs=3.
+SWAP PHASE: stu6.c
+Attempting individual swaps for 2 difference(s)
+
+--- Diff 1 [stu6.c]: function 'calculate_average', line 10, var '(Missing)' ---
+
+Finding diffs around line 10...
+No diff block found within ±0 lines of line 10.
+
+Finding diffs around line 10...
+-> Best match Diff type: 'insert', distance: 1 lines
+-> Trying swap of 2 line(s) (buggy 11-12, ref 10-9)...
+Compiling swap_test_check.c using gcc...
+-> Swap of 2 line(s) compiled successfully!
+
+RERANNING ALGORITHM [stu6.c] (diff 1, window=1)
+
+Processing Swapped Reference File: reference_swapped_stu6.c_1.c
+Compiling ref_swapped_stu6.c.traced.c using gcc...
+
+Captured Reference Output:
+TRACE:L15:Entering main
+TRACE:L4:Entering calculate_average
+TRACE:L4:size=5
+TRACE:L5:total=0
+TRACE:L8:total=10
+TRACE:L8:total=30
+TRACE:L8:total=60
+TRACE:L8:total=100
+TRACE:L8:total=150
+TRACE:L10:avg=30.000000
+TRACE:L11:Returning=30.000000
+TRACE:L17:result=30.000000
+Average: 30.00
+TRACE:L19:Returning=0
+
+
+Processing Swapped Buggy File: sample_swapped_stu6.c_1.c
+Compiling test_swapped_stu6.c.traced.c using gcc...
+
+Captured Buggy Output (up to crash):
+TRACE:L16:Entering main
+TRACE:L5:Entering calculate_average
+TRACE:L5:size=5
+TRACE:L6:total=0
+TRACE:L9:total=10
+TRACE:L9:total=30
+TRACE:L9:total=60
+TRACE:L9:total=100
+TRACE:L9:total=150
+TRACE:L11:avg=30.000000
+TRACE:L12:Returning=30.000000
+TRACE:L18:result=30.000000
+Average: 30.00
+TRACE:L20:Returning=0
+
+
+TRACE COMPARISON AFTER SWAP
+
+ TRACE COMPARISON
+Comparing logs to find the first point of divergence...
+
+No differences found in trace logs. The logic appears identical.
+Resolved [stu6.c] with window=1. Error in function 'calculate_average' at line: 10
+
+Results saved to trace_differences.json
+  stu.c: No differences found — likely correct.
+  stu2.c: function 'calculate_average', line 11, var 'avg', ref=30.000000, bug=37.500000
+  stu2.c: function 'main', line 18, var 'result', ref=30.000000, bug=37.500000
+  stu3.c: function 'calculate_average', line 6, var 'avg', ref=None, bug=0.000000
+  stu3.c: function 'calculate_average', line 7, var 'total', ref=0, bug=0
+  stu3.c: function 'calculate_average', line 10, var 'total', ref=10, bug=10
+  stu3.c: function 'calculate_average', line 12, var 'total', ref=None, bug=160
+  stu3.c: function 'calculate_average', line 13, var 'avg', ref=30.000000, bug=32.000000
+  stu3.c: function 'main', line 20, var 'result', ref=30.000000, bug=32.000000
+  stu4.c: function 'calculate_average', line 11, var 'sum', ref=None, bug=155
+  stu4.c: function 'calculate_average', line 12, var 'mean', ref=30.000000, bug=31.000000
+  stu4.c: function 'main', line 19, var 'final', ref=30.000000, bug=31.000000
+  stu5.c: function 'calculate_average', line 8, var 'total', ref=None, bug=200
+  stu5.c: function 'calculate_average', line 11, var 'total', ref=150, bug=201
+  stu5.c: function 'calculate_average', line 12, var 'avg', ref=30.000000, bug=40.200001
+  stu5.c: function 'main', line 20, var 'result', ref=30.000000, bug=40.200001
+  stu6.c: function 'calculate_average', line 10, var '(Missing)', ref=30.000000, bug=None
+  stu6.c: function 'calculate_average', line 19, var '(Missing)', ref=0, bug=None
 
 Cleaning up .c and .traced.c files...

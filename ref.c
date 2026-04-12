@@ -1,17 +1,20 @@
 #include <stdio.h>
 
-int math_stuff(int x)
+float calculate_average(int arr[], int size)
 {
-    int a = x + 1;
-    int b = x + 2;
-    int c = x + 3;
-    int d = x + 4;
-    return a + b + c + d;
+    int total = 0;
+    for (int i = 0; i < size; i++)
+    {
+        total += arr[i];
+    }
+    float avg = (float)total / size;
+    return avg;
 }
 
 int main()
 {
-    int ans = math_stuff(10);
-    printf("Result: %d\n", ans);
+    int scores[5] = {10, 20, 30, 40, 50};
+    float result = calculate_average(scores, 5);
+    printf("Average: %.2f\n", result);
     return 0;
 }

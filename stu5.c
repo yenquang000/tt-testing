@@ -7,14 +7,16 @@ float calculate_average(int arr[], int size)
     {
         total += arr[i];
     }
-    // BUG: divides by wrong number
-    float avg = (float)total / (size - 1);
+    // BUG 1: adds 1 to total
+    total += 1;
+    float avg = (float)total / size;
     return avg;
 }
 
 int main()
 {
-    int scores[5] = {10, 20, 30, 40, 50};
+    // BUG 2: wrong array values
+    int scores[5] = {10, 20, 30, 40, 100};
     float result = calculate_average(scores, 5);
     printf("Average: %.2f\n", result);
     return 0;

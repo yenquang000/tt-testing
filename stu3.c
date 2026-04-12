@@ -2,13 +2,15 @@
 
 float calculate_average(int arr[], int size)
 {
+    // BUG: also adds 10 to total
+    float avg = 0;
     int total = 0;
     for (int i = 0; i < size; i++)
     {
         total += arr[i];
     }
-    // BUG: divides by wrong number
-    float avg = (float)total / (size - 1);
+    total += 10;
+    avg = (float)total / size;
     return avg;
 }
 

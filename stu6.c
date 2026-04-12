@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 
 float calculate_average(int arr[], int size)
 {
@@ -7,8 +8,9 @@ float calculate_average(int arr[], int size)
     {
         total += arr[i];
     }
-    // BUG: divides by wrong number
-    float avg = (float)total / (size - 1);
+    // BUG: assert will fail and crash the program
+    assert(total == 999);
+    float avg = (float)total / size;
     return avg;
 }
 

@@ -1,22 +1,196 @@
 [
-  {
-    "trace_index": 9,
-    "function": "math_stuff",
-    "ref_line": 9,
-    "bug_line": 11,
-    "ref_var": "Returning",
-    "bug_var": "Returning",
-    "ref_val": "50",
-    "bug_val": "51"
-  },
-  {
-    "trace_index": 10,
-    "function": "main",
-    "ref_line": 14,
-    "bug_line": 16,
-    "ref_var": "ans",
-    "bug_var": "ans",
-    "ref_val": "50",
-    "bug_val": "51"
-  }
+    {
+        "student_file": "stu.c",
+        "total_differences": 0,
+        "status": "correct",
+        "differences": []
+    },
+    {
+        "student_file": "stu2.c",
+        "total_differences": 2,
+        "status": "has errors",
+        "differences": [
+            {
+                "error_number": 1,
+                "function": "calculate_average",
+                "bug_line": 11,
+                "ref_line": 10,
+                "variable": "avg",
+                "expected_value": "30.000000",
+                "actual_value": "37.500000"
+            },
+            {
+                "error_number": 2,
+                "function": "main",
+                "bug_line": 18,
+                "ref_line": 17,
+                "variable": "result",
+                "expected_value": "30.000000",
+                "actual_value": "37.500000"
+            }
+        ]
+    },
+    {
+        "student_file": "stu3.c",
+        "total_differences": 6,
+        "status": "has errors",
+        "differences": [
+            {
+                "error_number": 1,
+                "function": "calculate_average",
+                "bug_line": 6,
+                "ref_line": null,
+                "variable": "avg",
+                "expected_value": null,
+                "actual_value": "0.000000"
+            },
+            {
+                "error_number": 2,
+                "function": "calculate_average",
+                "bug_line": 7,
+                "ref_line": 5,
+                "variable": "total",
+                "expected_value": "0",
+                "actual_value": "0"
+            },
+            {
+                "error_number": 3,
+                "function": "calculate_average",
+                "bug_line": 10,
+                "ref_line": 8,
+                "variable": "total",
+                "expected_value": "10",
+                "actual_value": "10"
+            },
+            {
+                "error_number": 4,
+                "function": "calculate_average",
+                "bug_line": 12,
+                "ref_line": null,
+                "variable": "total",
+                "expected_value": null,
+                "actual_value": "160"
+            },
+            {
+                "error_number": 5,
+                "function": "calculate_average",
+                "bug_line": 13,
+                "ref_line": 10,
+                "variable": "avg",
+                "expected_value": "30.000000",
+                "actual_value": "32.000000"
+            },
+            {
+                "error_number": 6,
+                "function": "main",
+                "bug_line": 20,
+                "ref_line": 17,
+                "variable": "result",
+                "expected_value": "30.000000",
+                "actual_value": "32.000000"
+            }
+        ]
+    },
+    {
+        "student_file": "stu4.c",
+        "total_differences": 3,
+        "status": "has errors",
+        "differences": [
+            {
+                "error_number": 1,
+                "function": "calculate_average",
+                "bug_line": 11,
+                "ref_line": null,
+                "variable": "sum",
+                "expected_value": null,
+                "actual_value": "155"
+            },
+            {
+                "error_number": 2,
+                "function": "calculate_average",
+                "bug_line": 12,
+                "ref_line": 10,
+                "variable": "mean",
+                "expected_value": "30.000000",
+                "actual_value": "31.000000"
+            },
+            {
+                "error_number": 3,
+                "function": "main",
+                "bug_line": 19,
+                "ref_line": 17,
+                "variable": "final",
+                "expected_value": "30.000000",
+                "actual_value": "31.000000"
+            }
+        ]
+    },
+    {
+        "student_file": "stu5.c",
+        "total_differences": 4,
+        "status": "has errors",
+        "differences": [
+            {
+                "error_number": 1,
+                "function": "calculate_average",
+                "bug_line": 8,
+                "ref_line": null,
+                "variable": "total",
+                "expected_value": null,
+                "actual_value": "200"
+            },
+            {
+                "error_number": 2,
+                "function": "calculate_average",
+                "bug_line": 11,
+                "ref_line": 8,
+                "variable": "total",
+                "expected_value": "150",
+                "actual_value": "201"
+            },
+            {
+                "error_number": 3,
+                "function": "calculate_average",
+                "bug_line": 12,
+                "ref_line": 10,
+                "variable": "avg",
+                "expected_value": "30.000000",
+                "actual_value": "40.200001"
+            },
+            {
+                "error_number": 4,
+                "function": "main",
+                "bug_line": 20,
+                "ref_line": 17,
+                "variable": "result",
+                "expected_value": "30.000000",
+                "actual_value": "40.200001"
+            }
+        ]
+    },
+    {
+        "student_file": "stu6.c",
+        "total_differences": 2,
+        "status": "has errors",
+        "differences": [
+            {
+                "error_number": 1,
+                "function": "calculate_average",
+                "bug_line": null,
+                "ref_line": 10,
+                "variable": "(Missing)",
+                "expected_value": "30.000000",
+                "actual_value": null
+            },
+            {
+                "error_number": 2,
+                "function": "calculate_average",
+                "bug_line": null,
+                "ref_line": 19,
+                "variable": "(Missing)",
+                "expected_value": "0",
+                "actual_value": null
+            }
+        ]
+    }
 ]
